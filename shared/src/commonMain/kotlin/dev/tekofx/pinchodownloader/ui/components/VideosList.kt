@@ -24,7 +24,7 @@ import dev.tekofx.pinchodownloader.entities.Video
 @Composable
 fun VideosList(videos: List<Video>) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

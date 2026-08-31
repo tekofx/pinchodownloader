@@ -1,6 +1,11 @@
 package dev.tekofx.pinchodownloader
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,8 +39,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun DownloaderScreen() {
     val scope = rememberCoroutineScope()
-    var url by remember { mutableStateOf(TextFieldValue("")) }
-
+    var url by remember { mutableStateOf("") }
     var progress by remember { mutableFloatStateOf(0f) }
     var status by remember { mutableStateOf("") }
     var videos by remember { mutableStateOf<List<Video>>(emptyList()) }
@@ -46,6 +50,7 @@ fun DownloaderScreen() {
     }
 
     Column(
+        modifier = Modifier.fillMaxSize().padding(8.dp),
     ) {
 
         OutlinedTextField(
@@ -55,18 +60,8 @@ fun DownloaderScreen() {
             modifier = Modifier.fillMaxWidth()
         )
 
-        /*OutlinedTextField(
-            value = url,
-            onValueChange = { url = it },
-            label = { Text("Video URL") },
-            modifier = Modifier.fillMaxWidth()
-        )
-*/
-
-
-        //VideosList(videos)
-
-        /*AnimatedVisibility(visible = url.isNotBlank()) {
+        AnimatedVisibility(
+            visible = url.isNotBlank()) {
             Button(onClick = {
                 scope.launch {
                     status = "Downloading..."
@@ -81,7 +76,11 @@ fun DownloaderScreen() {
         AnimatedVisibility(progress != 0f) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
             Text(status)
-        }*/
+        }
+
+        VideosList(videos)
+
+
 
     }
 }
