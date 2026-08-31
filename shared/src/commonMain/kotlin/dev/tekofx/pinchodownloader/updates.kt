@@ -32,7 +32,8 @@ suspend fun getInstalledYtDlpVersion(): String? = withContext(Dispatchers.IO) {
 
 suspend fun checkYtDlpUpdate(): Boolean {
     val installed = getInstalledYtDlpVersion() ?: return false
-    val latest = getLatestYtDlpGithubRelease() // from previous answer
+    val latest = getLatestYtDlpGithubRelease()
+    println("Yt-Dlp current version: $latest")
     return installed != latest
 }
 
@@ -50,5 +51,7 @@ suspend fun getLatestPinchoDownloaderGithubVersion(): String? = withContext(Disp
 
 suspend fun checkPinchoDownloaderUpdate(): Boolean {
     val latest = getLatestPinchoDownloaderGithubVersion() // from previous answer
-    return installed != latest
+    val currentVersion = System.getProperty("jpackage.app-version") ?: "Development Version"
+    println("Current version: $currentVersion")
+    return currentVersion != latest
 }

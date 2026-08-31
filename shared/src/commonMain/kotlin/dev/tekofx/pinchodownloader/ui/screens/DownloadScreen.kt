@@ -11,9 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import dev.tekofx.pinchodownloader.entities.TaskStatus
+import dev.tekofx.pinchodownloader.entities.UpdateState
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
-import dev.tekofx.pinchodownloader.entities.YtDlpUpdateState
 import dev.tekofx.pinchodownloader.ui.components.Queue
 import kotlinx.coroutines.launch
 import java.awt.Toolkit
@@ -28,12 +28,18 @@ fun DownloaderScreen() {
     val videos = remember { mutableStateListOf<Video>() }
     var loading by remember { mutableStateOf(false) }
     var downloading by remember { mutableStateOf(false) }
-    var state by remember { mutableStateOf(YtDlpUpdateState.Checking) }
+    var newYtdlpVersion by remember { mutableStateOf(UpdateState.Checking) }
+    var newAppVersion by remember { mutableStateOf(UpdateState.Checking) }
 
     LaunchedEffect(Unit) {
-        state = when {
-            checkYtDlpUpdate() -> YtDlpUpdateState.UpdateAvailable
-            else -> YtDlpUpdateState.UpToDate
+        newYtdlpVersion = when {
+            checkYtDlpUpdate() -> UpdateState.UpdateAvailable
+            else -> UpdateState.UpToDate
+        }
+
+        newAppVersion = when {
+            checkPinchoDownloaderUpdate() -> UpdateState.UpdateAvailable
+            else -> UpdateState.UpToDate
         }
     }
 
@@ -74,9 +80,14 @@ fun DownloaderScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        if (state!= YtDlpUpdateState.UpToDate) {
+        if (newYtdlpVersion == UpdateState.UpdateAvailable) {
             Text("Yt-Dlp needs an update")
         }
+
+        if (newAppVersion == UpdateState.UpdateAvailable) {
+            Text("New app version: $newAppVersion")
+        }
+
 
 
 
