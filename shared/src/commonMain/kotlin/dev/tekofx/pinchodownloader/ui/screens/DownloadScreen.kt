@@ -10,10 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import dev.tekofx.pinchodownloader.entities.TaskStatus
-import dev.tekofx.pinchodownloader.entities.UpdateState
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
+import dev.tekofx.pinchodownloader.ui.components.AppTitle
 import dev.tekofx.pinchodownloader.ui.components.Queue
 import kotlinx.coroutines.launch
 import java.awt.Toolkit
@@ -28,20 +29,8 @@ fun DownloaderScreen() {
     val videos = remember { mutableStateListOf<Video>() }
     var loading by remember { mutableStateOf(false) }
     var downloading by remember { mutableStateOf(false) }
-    var newYtdlpVersion by remember { mutableStateOf(UpdateState.Checking) }
-    var newAppVersion by remember { mutableStateOf(UpdateState.Checking) }
+    var showDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        newYtdlpVersion = when {
-            checkYtDlpUpdate() -> UpdateState.UpdateAvailable
-            else -> UpdateState.UpToDate
-        }
-
-        newAppVersion = when {
-            checkPinchoDownloaderUpdate() -> UpdateState.UpdateAvailable
-            else -> UpdateState.UpToDate
-        }
-    }
 
     fun pasteFromClipboard(): String? {
         return try {
@@ -74,24 +63,34 @@ fun DownloaderScreen() {
         loading = false
     }
 
+    AnimatedVisibility(visible = showDialog) {
+        Dialog(onDismissRequest = { showDialog = false }) {
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Spacer(Modifier.height(8.dp))
+                    Text("Built on 2025-08-31", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(16.dp))
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Close")
+                    }
+                }
+            }
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        if (newYtdlpVersion == UpdateState.UpdateAvailable) {
-            Text("Yt-Dlp needs an update")
-        }
 
-        if (newAppVersion == UpdateState.UpdateAvailable) {
-            Text("New app version: $newAppVersion")
-        }
-
-
-
-
-        Text("Pincho Downloader", style = MaterialTheme.typography.displaySmall)
+        AppTitle(
+            onUpdateTagClick = { showDialog = true }
+        )
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
