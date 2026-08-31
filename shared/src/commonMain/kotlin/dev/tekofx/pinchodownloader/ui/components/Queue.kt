@@ -30,11 +30,18 @@ fun Queue(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Queue", style = MaterialTheme.typography.headlineSmall)
+        Text(
+            "Queue",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
 
 
         if (videos.isEmpty()) {
-            Text("Queue Empty")
+            Text(
+                "Queue Empty",
+                color = MaterialTheme.colorScheme.onSurface,
+            )
         }
 
         AnimatedVisibility(videos.isNotEmpty()) {
