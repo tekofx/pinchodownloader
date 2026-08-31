@@ -16,6 +16,7 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
             "-o", "$outDir/%(title)s.%(ext)s",
             "--newline",
             "--progress-template", "download:%(progress._percent_str)s",
+            "--extractor-args", "youtube:player-client=web_embedded,web,tv",
             url
         ).redirectErrorStream(true).start()
 
