@@ -1,6 +1,8 @@
 package dev.tekofx.pinchodownloader.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -27,6 +31,7 @@ import coil3.compose.AsyncImage
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import org.jetbrains.compose.resources.painterResource
 import pinchodownloader.shared.generated.resources.Res
 import pinchodownloader.shared.generated.resources.compose_multiplatform
@@ -34,21 +39,26 @@ import pinchodownloader.shared.generated.resources.compose_multiplatform
 
 @Composable
 fun VideosList(videos: List<Video>) {
-    Column(
+    LazyColumn(
         modifier = Modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        videos.forEach { video ->
-            VideoCard(video)
+        items(videos, key = { it.id }) { video ->
+            VideoCard(
+                video = video,
+                modifier = Modifier.animateItem(
+
+                )
+            )
         }
     }
 }
 
 
 @Composable
-fun VideoCard(video: Video) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+fun VideoCard(video: Video, modifier: Modifier) {
+    Card(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(10.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

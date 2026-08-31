@@ -9,11 +9,25 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ClearAll
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,8 +50,11 @@ import androidx.compose.ui.unit.dp
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
+import dev.tekofx.pinchodownloader.ui.components.TextIconButton
 import dev.tekofx.pinchodownloader.ui.components.VideosList
 import kotlinx.coroutines.launch
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
 
 @Composable
 fun DownloaderScreen() {
@@ -46,6 +63,14 @@ fun DownloaderScreen() {
     var progress by remember { mutableFloatStateOf(0f) }
     var status by remember { mutableStateOf("") }
     val videos = remember { mutableStateListOf<Video>() }
+    fun pasteFromClipboard(): String? {
+        return try {
+            Toolkit.getDefaultToolkit().systemClipboard
+                .getData(DataFlavor.stringFlavor) as? String
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     suspend fun addToQueue() {
         when (val result = getVideoInfo(url)) {
@@ -70,49 +95,94 @@ fun DownloaderScreen() {
     Column(
         modifier = Modifier.fillMaxSize().padding(8.dp),
     ) {
-
-        OutlinedTextField(
-            value = url,
-            onValueChange = { url = it },
-            label = { Text("Video URL") },
-            singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .onPreviewKeyEvent { event ->
-                    if (event.type == KeyEventType.KeyDown && event.key == Key.Enter) {
-                        if (url.isNotBlank()) {
-                            scope.launch {
-                                addToQueue()
-                                url = ""  // clear the field
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = url,
+                onValueChange = { url = it },
+                label = { Text("Video URL") },
+                singleLine = true,
+                modifier = Modifier
+                    .weight(1f)
+                    .onPreviewKeyEvent { event ->
+                        if (event.type == KeyEventType.KeyDown && event.key == Key.Enter) {
+                            if (url.isNotBlank()) {
+                                scope.launch {
+                                    addToQueue()
+                                    url = ""  // clear the field
+                                }
                             }
+                            true // consume the event
+                        } else {
+                            false
                         }
-                        true // consume the event
-                    } else {
-                        false
                     }
-                }
-        )
-
-
-        Button(onClick = {
-            scope.launch {
-                for (i in videos.indices) {
-                    videos[i] = videos[i].copy(status = TaskStatus.IN_PROGRESS)  // ← new instance
-                    downloadYtDlp(videos[i].url, getDownloadsDir()) { p ->
-                        videos[i] = videos[i].copy(progress = p.toFloat())
+            )
+            IconButton(
+                onClick = {
+                    val clipboardContent = pasteFromClipboard()
+                    if (clipboardContent != null) {
+                        url = clipboardContent
                     }
-                    videos[i] = videos[i].copy(status = TaskStatus.COMPLETED)   // ← new instance
-                    progress = i.toFloat() * 100 / videos.size
-
-                }
-                status = "Done"
+                },
+            ) {
+                Icon(imageVector = Icons.Filled.ContentPaste, null)
             }
-        }, enabled = videos.isNotEmpty()) { Text("Download All") }
+            IconButton(
+                onClick = {
+                    url = ""
+                },
+            ) {
+                Icon(imageVector = Icons.Filled.Delete, null)
+            }
+        }
+
+
 
         AnimatedVisibility(progress != 0f) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
         Text(status)
+
+        Text("Queue", style = MaterialTheme.typography.headlineSmall)
+
+        if (videos.isEmpty()) {
+            Text("Queue Empty")
+        }
+
+        AnimatedVisibility(videos.isNotEmpty()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                TextIconButton(
+                    onClick = {
+                        scope.launch {
+                            for (i in videos.indices) {
+                                videos[i] = videos[i].copy(status = TaskStatus.IN_PROGRESS)  // ← new instance
+                                downloadYtDlp(videos[i].url, getDownloadsDir()) { p ->
+                                    videos[i] = videos[i].copy(progress = p.toFloat())
+                                }
+                                videos[i] = videos[i].copy(status = TaskStatus.COMPLETED)   // ← new instance
+                                progress = i.toFloat() * 100 / videos.size
+
+                            }
+                            status = "Done"
+                        }
+                    },
+                    icon = Icons.Filled.Download,
+                    text = "Download All"
+                )
+                TextIconButton(
+                    onClick = {
+                        videos.clear()
+                    },
+                    icon = Icons.Filled.ClearAll,
+                    text = "Clear Queue"
+                )
+            }
+        }
+
         VideosList(videos)
 
 
