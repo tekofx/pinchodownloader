@@ -4,9 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.Download
@@ -17,11 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.tekofx.pinchodownloader.downloadYtDlp
-import dev.tekofx.pinchodownloader.entities.TaskStatus
+import dev.tekofx.pinchodownloader.entities.ButtonVariant
 import dev.tekofx.pinchodownloader.entities.Video
-import dev.tekofx.pinchodownloader.getDownloadsDir
-import kotlinx.coroutines.launch
 
 @Composable
 fun Queue(
@@ -54,7 +49,8 @@ fun Queue(
                 TextIconButton(
                     onClick = onClear,
                     icon = Icons.Filled.ClearAll,
-                    text = "Clear Queue"
+                    text = "Clear Queue",
+                    variant = ButtonVariant.Outlined
                 )
             }
         }
