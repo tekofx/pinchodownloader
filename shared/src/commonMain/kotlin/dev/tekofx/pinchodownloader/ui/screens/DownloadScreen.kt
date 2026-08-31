@@ -65,7 +65,7 @@ fun DownloaderScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Text("Pincho Downloader", style = MaterialTheme.typography.displayMedium)
+        Text("Pincho Downloader", style = MaterialTheme.typography.displaySmall)
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
