@@ -1,5 +1,6 @@
 package dev.tekofx.pinchodownloader.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,8 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,13 +26,18 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
+import androidx.compose.material3.Icon
+import org.jetbrains.compose.resources.painterResource
+import pinchodownloader.shared.generated.resources.Res
+import pinchodownloader.shared.generated.resources.compose_multiplatform
 
 
 @Composable
 fun VideosList(videos: List<Video>) {
     Column(
         modifier = Modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         videos.forEach { video ->
             VideoCard(video)
@@ -58,11 +68,27 @@ fun VideoCard(video: Video) {
                 Text(text = video.title)
             }
 
-            CircularProgressIndicator(
-                progress = { video.progress },
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                AnimatedVisibility(visible = video.status == TaskStatus.IN_PROGRESS) {
+                    CircularProgressIndicator(
+                        progress = { video.progress },
+                        color = TaskStatus.IN_PROGRESS.color
+                    )
+                }
 
-            Text(text = video.status.label, color = video.status.color)
+                AnimatedVisibility(visible = video.status == TaskStatus.COMPLETED) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = null,
+                        tint = TaskStatus.COMPLETED.color
+                    )
+                }
+
+                Text(text = video.status.label, color = video.status.color)
+            }
         }
     }
 }
