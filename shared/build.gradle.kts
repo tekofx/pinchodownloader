@@ -19,7 +19,12 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
+            // Coil
             implementation("io.coil-kt.coil3:coil-compose:3.5.0")
+            implementation("io.coil-kt.coil3:coil-network-okhttp:3.5.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
+
+            //JSON
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
         }
         commonTest.dependencies {
