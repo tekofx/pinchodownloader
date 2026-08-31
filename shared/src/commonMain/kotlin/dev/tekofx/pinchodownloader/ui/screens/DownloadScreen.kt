@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
+import dev.tekofx.pinchodownloader.entities.YtDlpUpdateState
 import dev.tekofx.pinchodownloader.ui.components.Queue
 import kotlinx.coroutines.launch
 import java.awt.Toolkit
@@ -27,6 +28,14 @@ fun DownloaderScreen() {
     val videos = remember { mutableStateListOf<Video>() }
     var loading by remember { mutableStateOf(false) }
     var downloading by remember { mutableStateOf(false) }
+    var state by remember { mutableStateOf(YtDlpUpdateState.Checking) }
+
+    LaunchedEffect(Unit) {
+        state = when {
+            checkYtDlpUpdate() -> YtDlpUpdateState.UpdateAvailable
+            else -> YtDlpUpdateState.UpToDate
+        }
+    }
 
     fun pasteFromClipboard(): String? {
         return try {
@@ -64,6 +73,12 @@ fun DownloaderScreen() {
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        if (state!= YtDlpUpdateState.UpToDate) {
+            Text("Yt-Dlp needs an update")
+        }
+
+
 
         Text("Pincho Downloader", style = MaterialTheme.typography.displaySmall)
         Row(
