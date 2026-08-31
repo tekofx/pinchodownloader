@@ -1,5 +1,6 @@
 package dev.tekofx.pinchodownloader
 
+import dev.tekofx.pinchodownloader.entities.VideoInfoResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -12,4 +13,4 @@ expect suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
 expect fun getDownloadsDir(): String
 
 
-expect suspend fun getVideoInfo(url: String): Pair<String, String>
+expect suspend fun getVideoInfo(url: String): VideoInfoResult

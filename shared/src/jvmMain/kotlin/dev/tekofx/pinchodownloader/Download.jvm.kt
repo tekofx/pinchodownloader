@@ -1,11 +1,13 @@
 package dev.tekofx.pinchodownloader
 
+import dev.tekofx.pinchodownloader.entities.VideoInfoResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
+import java.io.IOException
 
 actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Double) -> Unit) {
     withContext(Dispatchers.IO) {
@@ -32,18 +34,35 @@ actual fun getDownloadsDir(): String {
     return dir.absolutePath
 }
 
-actual suspend fun getVideoInfo(url: String): Pair<String, String> {
+actual suspend fun getVideoInfo(url: String): VideoInfoResult {
     return withContext(Dispatchers.IO) {
-        val proc = ProcessBuilder("yt-dlp", "-J", url)
-            .redirectErrorStream(true).start()
+        try {
+            val proc = ProcessBuilder("yt-dlp", "--no-warning", "-J", url)
+                .redirectErrorStream(true)
+                .start()
 
-        val json = proc.inputStream.bufferedReader().readText()
-        proc.waitFor()
+            val json = proc.inputStream.bufferedReader().readText()
+            val exitCode = proc.waitFor()
 
-        // Parse with kotlinx.serialization or org.json
-        val obj = Json.parseToJsonElement (json).jsonObject
-        val title = obj["title"]!!.jsonPrimitive.content
-        val thumbnail = obj["thumbnail"]!!.jsonPrimitive.content
-        title to thumbnail
+            if (exitCode != 0) {
+                // yt-dlp prints its error to stdout when redirectErrorStream(true)
+                return@withContext VideoInfoResult.Error(
+                    "yt-dlp failed (exit $exitCode): ${json.take(200)}"
+                )
+            }
+
+            val obj = Json.parseToJsonElement(json).jsonObject
+            val title = obj["title"]?.jsonPrimitive?.content
+                ?: return@withContext VideoInfoResult.Error("No title in response")
+            val thumbnail = obj["thumbnail"]?.jsonPrimitive?.content
+                ?: return@withContext VideoInfoResult.Error("No thumbnail in response")
+
+            VideoInfoResult.Success(title, thumbnail)
+
+        } catch (e: IOException) {
+            VideoInfoResult.Error("yt-dlp not found: ${e.message}")
+        } catch (e: Exception) {
+            VideoInfoResult.Error("Unexpected error: ${e.message}")
+        }
     }
 }
