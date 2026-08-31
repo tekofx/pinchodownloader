@@ -19,9 +19,13 @@ compose.desktop {
     application {
         mainClass = "dev.tekofx.pinchodownloader.MainKt"
 
+
+
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe, TargetFormat.Rpm)
-            packageName = "dev.tekofx.pinchodownloader"
+
+
+            packageName = "Pincho Downloader"
             packageVersion = "1.0.0"
         }
     }
