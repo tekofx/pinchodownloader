@@ -1,14 +1,16 @@
 package dev.tekofx.pinchodownloader
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import dev.tekofx.pinchodownloader.ui.theme.AppTheme
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme(colorScheme = darkColorScheme()) {
-        DownloaderScreen()
+    AppTheme {
+        Surface {
+            DownloaderScreen()
+        }
     }
 }

@@ -1,6 +1,7 @@
 package dev.tekofx.pinchodownloader
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentPaste
@@ -65,6 +66,8 @@ fun DownloaderScreen() {
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        Text(isSystemInDarkTheme().toString())
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {

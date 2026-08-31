@@ -40,7 +40,6 @@ fun Queue(
         if (videos.isEmpty()) {
             Text(
                 "Queue Empty",
-                color = MaterialTheme.colorScheme.onSurface,
             )
         }
 
