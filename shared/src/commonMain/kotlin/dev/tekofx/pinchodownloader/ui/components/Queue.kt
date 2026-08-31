@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +26,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun Queue(
     videos: List<Video>,
+    downloading: Boolean,
+    progress: Float,
     onDownloadAll: () -> Unit,
     onClear: () -> Unit,
 ) {
@@ -32,6 +36,7 @@ fun Queue(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Queue", style = MaterialTheme.typography.headlineSmall)
+
 
         if (videos.isEmpty()) {
             Text("Queue Empty")
@@ -54,6 +59,9 @@ fun Queue(
             }
         }
 
+        AnimatedVisibility(downloading) {
+            LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+        }
         VideosList(videos)
     }
 

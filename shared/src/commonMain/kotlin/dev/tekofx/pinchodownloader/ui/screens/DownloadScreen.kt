@@ -68,6 +68,7 @@ fun DownloaderScreen() {
     var status by remember { mutableStateOf("") }
     val videos = remember { mutableStateListOf<Video>() }
     var loading by remember { mutableStateOf(false) }
+    var downloading by remember { mutableStateOf(false) }
 
     fun pasteFromClipboard(): String? {
         return try {
@@ -152,10 +153,6 @@ fun DownloaderScreen() {
             }
         }
 
-        AnimatedVisibility(progress != 0f) {
-            LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
-        }
-
         AnimatedVisibility(visible = loading) {
             Card {
                 Row(
@@ -169,26 +166,29 @@ fun DownloaderScreen() {
         }
 
         Queue(
-
             videos = videos,
+            downloading = downloading,
+            progress = progress,
             onDownloadAll = {
                 scope.launch {
+                    downloading = true
                     for (i in videos.indices) {
                         videos[i] = videos[i].copy(status = TaskStatus.IN_PROGRESS)  // ← new instance
                         downloadYtDlp(videos[i].url, getDownloadsDir()) { p ->
                             videos[i] = videos[i].copy(progress = p.toFloat())
+                            progress = (i + p).toFloat() / videos.size
                         }
                         videos[i] = videos[i].copy(status = TaskStatus.COMPLETED)   // ← new instance
-                        progress = i.toFloat() * 100 / videos.size
-
                     }
+                    progress = 1f
                     status = "Done"
+                    downloading = false
                 }
             },
             onClear = { videos.clear() }
 
         )
 
-      
+
     }
 }
