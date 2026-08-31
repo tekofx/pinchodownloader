@@ -33,6 +33,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import dev.tekofx.pinchodownloader.entities.Video
+import dev.tekofx.pinchodownloader.entities.VideoInfoResult
 import dev.tekofx.pinchodownloader.ui.components.VideosList
 import kotlinx.coroutines.launch
 
@@ -44,9 +45,20 @@ fun DownloaderScreen() {
     var status by remember { mutableStateOf("") }
     var videos by remember { mutableStateOf<List<Video>>(emptyList()) }
 
-    suspend fun addToQueue(newUrl: String) {
-        val (title, thumbnail) = getVideoInfo(newUrl)
-        videos = videos + Video(id = videos.size + 1, title = title, thumbnail = thumbnail)
+    suspend fun addToQueue() {
+        when (val result = getVideoInfo(url)) {
+            is VideoInfoResult.Success -> {
+                videos = videos + Video(
+                    id = videos.size + 1,
+                    title = result.title,
+                    thumbnail = result.thumbnail
+                )
+                url = ""
+            }
+            is VideoInfoResult.Error -> {
+                status = result.message  // show it in the UI
+            }
+        }
     }
 
     Column(
@@ -57,7 +69,22 @@ fun DownloaderScreen() {
             value = url,
             onValueChange = { url = it },
             label = { Text("Video URL") },
-            modifier = Modifier.fillMaxWidth()
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .onPreviewKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && event.key == Key.Enter) {
+                        if (url.isNotBlank()) {
+                            scope.launch {
+                                addToQueue()
+                                url = ""  // clear the field
+                            }
+                        }
+                        true // consume the event
+                    } else {
+                        false
+                    }
+                }
         )
 
         AnimatedVisibility(
@@ -75,9 +102,9 @@ fun DownloaderScreen() {
 
         AnimatedVisibility(progress != 0f) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
-            Text(status)
         }
 
+            Text(status)
         VideosList(videos)
 
 

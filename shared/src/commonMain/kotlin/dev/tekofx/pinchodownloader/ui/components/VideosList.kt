@@ -38,7 +38,11 @@ fun VideosList(videos: List<Video>) {
 @Composable
 fun VideoCard(video: Video) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Row {
+        Row(
+            modifier = Modifier.padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(text = video.id.toString())
             AsyncImage(
                 model = video.thumbnail,
