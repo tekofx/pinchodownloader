@@ -57,7 +57,7 @@ actual suspend fun getVideoInfo(url: String): VideoInfoResult {
             val thumbnail = obj["thumbnail"]?.jsonPrimitive?.content
                 ?: return@withContext VideoInfoResult.Error("No thumbnail in response")
 
-            VideoInfoResult.Success(title, thumbnail)
+            VideoInfoResult.Success(title, thumbnail, url)
 
         } catch (e: IOException) {
             VideoInfoResult.Error("yt-dlp not found: ${e.message}")

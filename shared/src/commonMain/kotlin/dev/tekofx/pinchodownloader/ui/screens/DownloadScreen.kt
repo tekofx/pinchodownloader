@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,6 +33,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
 import dev.tekofx.pinchodownloader.ui.components.VideosList
@@ -43,20 +45,24 @@ fun DownloaderScreen() {
     var url by remember { mutableStateOf("") }
     var progress by remember { mutableFloatStateOf(0f) }
     var status by remember { mutableStateOf("") }
-    var videos by remember { mutableStateOf<List<Video>>(emptyList()) }
+    val videos = remember { mutableStateListOf<Video>() }
 
     suspend fun addToQueue() {
         when (val result = getVideoInfo(url)) {
             is VideoInfoResult.Success -> {
-                videos = videos + Video(
-                    id = videos.size + 1,
-                    title = result.title,
-                    thumbnail = result.thumbnail
+                videos.add(
+                    Video(
+                        id = videos.size + 1,
+                        title = result.title,
+                        thumbnail = result.thumbnail,
+                        url = url
+                    )
                 )
                 url = ""
             }
+
             is VideoInfoResult.Error -> {
-                status = result.message  // show it in the UI
+                status = result.message
             }
         }
     }
@@ -87,26 +93,27 @@ fun DownloaderScreen() {
                 }
         )
 
-        AnimatedVisibility(
-            visible = url.isNotBlank()) {
-            Button(onClick = {
-                scope.launch {
-                    status = "Downloading..."
-                    downloadYtDlp(url, getDownloadsDir()) { p ->
-                        progress = p.toFloat()  // already on Main via rememberCoroutineScope
+
+        Button(onClick = {
+            scope.launch {
+                for (i in videos.indices) {
+                    videos[i] = videos[i].copy(status = TaskStatus.IN_PROGRESS)  // ← new instance
+                    downloadYtDlp(videos[i].url, getDownloadsDir()) { p ->
+                        videos[i] = videos[i].copy(progress = p.toFloat())
                     }
-                    status = "Done"
+                    videos[i] = videos[i].copy(status = TaskStatus.COMPLETED)   // ← new instance
+                    progress = i.toFloat() * 100 / videos.size
+
                 }
-            }, enabled = url.isNotBlank()) { Text("Download") }
-        }
+                status = "Done"
+            }
+        }, enabled = videos.isNotEmpty()) { Text("Download All") }
 
         AnimatedVisibility(progress != 0f) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
-
-            Text(status)
+        Text(status)
         VideosList(videos)
-
 
 
     }
