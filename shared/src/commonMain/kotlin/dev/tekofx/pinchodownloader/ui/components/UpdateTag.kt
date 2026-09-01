@@ -172,6 +172,7 @@ fun AppPart(
     Column {
         Text("App Update", style = MaterialTheme.typography.headlineSmall)
         Button(
+            enabled = appUpdateState == UpdateState.UpdateAvailable,
             onClick = { uriHandler.openUri("https://github.com/tekofx/pinchodownloader/releases/latest") }) {
             when (appUpdateState) {
                 UpdateState.UpToDate -> {
