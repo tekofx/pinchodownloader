@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 fun AppTitle(
 ) {
     Row(
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text("Pincho Downloader", style = MaterialTheme.typography.displaySmall)
