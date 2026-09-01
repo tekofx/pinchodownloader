@@ -10,13 +10,12 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun AppTitle(
-    onUpdateTagClick: () -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text("Pincho Downloader", style = MaterialTheme.typography.displaySmall)
-        UpdateTag(onClick = onUpdateTagClick)
+        UpdateTag()
     }
 }

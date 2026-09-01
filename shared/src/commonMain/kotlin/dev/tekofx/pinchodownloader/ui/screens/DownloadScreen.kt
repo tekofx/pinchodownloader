@@ -1,4 +1,4 @@
-package dev.tekofx.pinchodownloader
+package dev.tekofx.pinchodownloader.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
@@ -10,10 +10,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import dev.tekofx.pinchodownloader.downloadYtDlp
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
+import dev.tekofx.pinchodownloader.getDownloadsDir
+import dev.tekofx.pinchodownloader.getVideoInfo
 import dev.tekofx.pinchodownloader.ui.components.AppTitle
 import dev.tekofx.pinchodownloader.ui.components.Queue
 import kotlinx.coroutines.launch
@@ -29,7 +31,6 @@ fun DownloaderScreen() {
     val videos = remember { mutableStateListOf<Video>() }
     var loading by remember { mutableStateOf(false) }
     var downloading by remember { mutableStateOf(false) }
-    var showDialog by remember { mutableStateOf(false) }
 
 
     fun pasteFromClipboard(): String? {
@@ -63,23 +64,6 @@ fun DownloaderScreen() {
         loading = false
     }
 
-    AnimatedVisibility(visible = showDialog) {
-        Dialog(onDismissRequest = { showDialog = false }) {
-            Surface(
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Spacer(Modifier.height(8.dp))
-                    Text("Built on 2025-08-31", style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(16.dp))
-                    TextButton(onClick = { showDialog = false }) {
-                        Text("Close")
-                    }
-                }
-            }
-        }
-    }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(8.dp),
@@ -88,9 +72,7 @@ fun DownloaderScreen() {
     ) {
 
 
-        AppTitle(
-            onUpdateTagClick = { showDialog = true }
-        )
+        AppTitle()
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
