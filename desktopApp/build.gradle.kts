@@ -15,6 +15,8 @@ dependencies {
     implementation(libs.compose.uiToolingPreview)
 
     implementation(libs.compose.components.resources)
+    implementation(libs.ktor.client.java)
+
 }
 
 compose.desktop {

@@ -26,11 +26,13 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
 
             // Coil
-            implementation("io.coil-kt.coil3:coil-compose:3.5.0")
-            implementation("io.coil-kt.coil3:coil-network-okhttp:3.5.0")
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
+            implementation(libs.coil3.compose)
+            //implementation(libs.coil3.network.okhttp)
+            implementation(libs.coil3.network.ktor)
+
 
             //JSON
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
@@ -40,6 +42,7 @@ kotlin {
 
 
         }
+
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
