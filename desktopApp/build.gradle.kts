@@ -31,7 +31,7 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe, TargetFormat.Rpm)
 
             packageName = "Pincho Downloader"
-            packageVersion = "1.1.0"
+            packageVersion = "1.1.1"
 
             windows {
                 menu = true
