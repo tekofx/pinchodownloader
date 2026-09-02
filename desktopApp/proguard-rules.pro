@@ -1,0 +1,3 @@
+-dontwarn okhttp3.internal.platform.**
+-dontwarn org.conscrypt.**
+-dontwarn dalvik.system.**
