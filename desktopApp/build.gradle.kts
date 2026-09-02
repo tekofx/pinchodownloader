@@ -13,20 +13,25 @@ dependencies {
     implementation(libs.kotlinx.coroutinesSwing)
 
     implementation(libs.compose.uiToolingPreview)
+
+    implementation(libs.compose.components.resources)
 }
 
 compose.desktop {
     application {
         mainClass = "dev.tekofx.pinchodownloader.MainKt"
 
-
-
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe, TargetFormat.Rpm)
 
-
             packageName = "Pincho Downloader"
             packageVersion = "1.1.0"
+
+            windows {
+                menu = true
+                shortcut = true
+                iconFile.set(project.file("src/main/resources/icons/icon.ico"))
+            }
         }
     }
 }

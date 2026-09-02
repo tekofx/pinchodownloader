@@ -5,12 +5,19 @@ plugins {
     kotlin("plugin.serialization")
 }
 
+compose.resources {
+    publicResClass = true
+}
+
 kotlin {
     jvm()
 
 
+
     sourceSets {
         commonMain.dependencies {
+
+
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
@@ -29,7 +36,9 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
             // Material icons
-            implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+            implementation(libs.compose.materialIconsExtended)
+
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
