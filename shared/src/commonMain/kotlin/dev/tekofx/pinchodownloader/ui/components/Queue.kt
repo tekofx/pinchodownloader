@@ -1,18 +1,12 @@
 package dev.tekofx.pinchodownloader.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DownloadDone
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,14 +26,13 @@ fun Queue(
 ) {
     AnimatedVisibility(videos.isNotEmpty()) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
                     "Queue",
@@ -47,17 +40,18 @@ fun Queue(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
 
+                Card {
+                    Text(modifier = Modifier.padding(5.dp), text = videos.size.toString() + " in queue")
+                }
+
             }
 
 
             Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+                horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()
             ) {
                 TextIconButton(
-                    onClick = onDownloadAll,
-                    icon = Icons.Filled.Download,
-                    text = "Download All"
+                    onClick = onDownloadAll, icon = Icons.Filled.Download, text = "Download All"
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)

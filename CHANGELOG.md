@@ -5,6 +5,7 @@
 - Added log view
 - Buttons "Clear Completed" and "Clear Failed"
 - Added format in video card
+- Tag with how many elements are in queue
 
 ### Improvements
 
