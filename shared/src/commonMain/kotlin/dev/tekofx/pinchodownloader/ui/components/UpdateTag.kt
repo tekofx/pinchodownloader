@@ -190,7 +190,7 @@ fun AppPart(
                     Text("Update")
                 }
 
-                else -> null
+                else -> {}
             }
         }
 
@@ -228,7 +228,7 @@ fun YtDlpPart(
                     Text("Up to date")
                 }
 
-                else -> null
+                else -> {}
             }
         }
 
