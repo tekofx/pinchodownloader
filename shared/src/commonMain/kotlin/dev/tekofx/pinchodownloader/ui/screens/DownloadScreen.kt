@@ -1,12 +1,16 @@
 package dev.tekofx.pinchodownloader.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tekofx.pinchodownloader.pasteFromClipboard
@@ -22,8 +26,10 @@ fun DownloaderScreen(
     var url by remember { mutableStateOf("") }
     var showLogs by remember { mutableStateOf(false) }
 
-    LaunchedEffect(viewModel.snackbar.value) {
-        viewModel.snackbar.value?.let {
+    val snackbarMessage by viewModel.snackbar.collectAsState()
+
+    LaunchedEffect(snackbarMessage) {
+        snackbarMessage?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.dismissSnackbar()
         }
