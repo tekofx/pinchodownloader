@@ -40,6 +40,8 @@ kotlin {
             // Material icons
             implementation(libs.compose.materialIconsExtended)
 
+            // Datetime
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.6.x-compat")
 
         }
 

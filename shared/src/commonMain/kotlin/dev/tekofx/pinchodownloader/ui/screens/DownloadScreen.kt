@@ -17,6 +17,7 @@ import dev.tekofx.pinchodownloader.entities.VideoInfoResult
 import dev.tekofx.pinchodownloader.getDownloadsDir
 import dev.tekofx.pinchodownloader.getVideoInfo
 import dev.tekofx.pinchodownloader.ui.components.AppTitle
+import dev.tekofx.pinchodownloader.ui.components.LogView
 import dev.tekofx.pinchodownloader.ui.components.Queue
 import kotlinx.coroutines.launch
 import java.awt.Toolkit
@@ -31,6 +32,7 @@ fun DownloaderScreen() {
     val videos = remember { mutableStateListOf<Video>() }
     var loading by remember { mutableStateOf(false) }
     var downloading by remember { mutableStateOf(false) }
+    var showLogs by remember { mutableStateOf(false) }
 
 
     fun pasteFromClipboard(): String? {
@@ -65,15 +67,18 @@ fun DownloaderScreen() {
         loading = false
     }
 
-
     Column(
         modifier = Modifier.fillMaxSize().padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        AnimatedVisibility(visible = showLogs)
+        {
+            LogView(onCloseClick = { showLogs = false })
+        }
 
 
-        AppTitle()
+        AppTitle(onIconClick = { showLogs = true })
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {

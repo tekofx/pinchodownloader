@@ -1,6 +1,8 @@
 package dev.tekofx.pinchodownloader
 
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
+import dev.tekofx.pinchodownloader.log.LogStatus
+import dev.tekofx.pinchodownloader.log.LogStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -21,10 +23,15 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
             url
         ).redirectErrorStream(true).start()
 
-
-
         proc.inputStream.bufferedReader().forEachLine { line ->
-            println(line)
+            val status = when {
+                line.contains("ERROR:") || line.contains("[error]") -> LogStatus.ERROR
+                line.contains("WARNING:") || line.contains("[warning]") -> LogStatus.WARN
+                line.startsWith("download:") -> LogStatus.DEBUG
+                else -> LogStatus.INFO
+            }
+            LogStore.log(tag = "YT-Dlp Download", message = line, status = status)
+
             val pct = line.removePrefix("download:").trim().removeSuffix("%")
             pct.toDoubleOrNull()?.let { onProgress(it / 100.0) }
         }
@@ -46,11 +53,14 @@ actual suspend fun getVideoInfo(url: String): VideoInfoResult {
                 .redirectErrorStream(true)
                 .start()
 
+
             val json = proc.inputStream.bufferedReader().readText()
             val exitCode = proc.waitFor()
 
             if (exitCode != 0) {
                 // yt-dlp prints its error to stdout when redirectErrorStream(true)
+                LogStore.error("yt-dlp Get Video Info", "exit=$exitCode")
+                LogStore.error("yt-dlp Get Video Info", json.take(500))
                 return@withContext VideoInfoResult.Error(
                     "yt-dlp failed (exit $exitCode): ${json.take(200)}"
                 )

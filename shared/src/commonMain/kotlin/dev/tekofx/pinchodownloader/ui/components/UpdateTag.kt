@@ -16,6 +16,7 @@ import androidx.compose.ui.window.Dialog
 import dev.tekofx.pinchodownloader.checkPinchoDownloaderUpdate
 import dev.tekofx.pinchodownloader.checkYtDlpUpdate
 import dev.tekofx.pinchodownloader.entities.UpdateState
+import dev.tekofx.pinchodownloader.log.LogStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -53,46 +54,51 @@ fun UpdateTag(
 
     suspend fun updateYtDlp() {
         ytDlpUpdateState = UpdateState.Updating
+        LogStore.info("yt-dlp", "Update started")
+
         try {
             val exitCode = withContext(Dispatchers.IO) {
                 ProcessBuilder("yt-dlp", "-U").redirectErrorStream(true).start().waitFor()
             }
+            LogStore.info("yt-dlp", "Update exit code: $exitCode")
 
             if (exitCode == 0) {
-                // Silent update succeeded → re-check after a short delay
+                LogStore.info("yt-dlp", "Silent update succeeded")
                 delay(1000.milliseconds)
             } else {
-                // Failed → open PowerShell
+                LogStore.warn("yt-dlp", "Silent update failed, opening PowerShell")
                 withContext(Dispatchers.IO) {
-                    ProcessBuilder(
-                        "powershell.exe", "-NoExit", "-Command", "yt-dlp -U"
-                    ).start()
+                    ProcessBuilder("powershell.exe", "-NoExit", "-Command", "yt-dlp -U").start()
                 }
-                // Poll every 10s for up to 2 min waiting for the update to land
-                repeat(12) {
+                repeat(12) { i ->
                     Thread.sleep(10_000)
-                    if (!checkYtDlpUpdate()) return@repeat
+                    LogStore.debug("yt-dlp", "Poll $i/12...")
+                    if (checkYtDlpUpdate()) {
+                        LogStore.info("yt-dlp", "Update confirmed after poll $i")
+                        return@repeat
+                    }
                 }
+                LogStore.warn("yt-dlp", "Polling timed out (2 min)")
             }
         } catch (e: Exception) {
+            LogStore.error("yt-dlp", "Exception: ${e.message}")
             withContext(Dispatchers.IO) {
-                ProcessBuilder(
-                    "powershell.exe", "-NoExit", "-Command", "yt-dlp -U"
-                ).start()
+                ProcessBuilder("powershell.exe", "-NoExit", "-Command", "yt-dlp -U").start()
             }
-            repeat(12) {
+            repeat(12) { i ->
                 Thread.sleep(10_000)
-                if (!checkYtDlpUpdate()) return@repeat
+                LogStore.debug("yt-dlp", "Poll $i/12 (fallback)...")
+                if (checkYtDlpUpdate()) {
+                    LogStore.info("yt-dlp", "Update confirmed after fallback poll $i")
+                    return@repeat
+                }
             }
+            LogStore.warn("yt-dlp", "Fallback polling timed out (2 min)")
         }
 
-        // Final re-check → update UI state
-        ytDlpUpdateState = when {
-            checkYtDlpUpdate() -> UpdateState.UpdateAvailable
-            else -> UpdateState.UpToDate
-        }
-
-        ytDlpUpdateState = UpdateState.UpToDate
+        val upToDate = checkYtDlpUpdate()
+        ytDlpUpdateState = if (upToDate) UpdateState.UpToDate else UpdateState.UpdateAvailable
+        LogStore.info("yt-dlp", "Final state: ${if (upToDate) "UpToDate" else "UpdateAvailable"}")
     }
 
 
