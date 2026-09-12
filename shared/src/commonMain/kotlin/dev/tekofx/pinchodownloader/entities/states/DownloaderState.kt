@@ -1,4 +1,4 @@
-package dev.tekofx.pinchodownloader.states
+package dev.tekofx.pinchodownloader.entities.states
 
 import dev.tekofx.pinchodownloader.entities.Video
 

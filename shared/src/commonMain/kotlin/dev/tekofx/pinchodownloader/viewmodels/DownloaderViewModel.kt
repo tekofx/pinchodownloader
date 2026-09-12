@@ -2,15 +2,15 @@ package dev.tekofx.pinchodownloader.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.tekofx.pinchodownloader.downloadYtDlp
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
-import dev.tekofx.pinchodownloader.getDownloadsDir
-import dev.tekofx.pinchodownloader.getVideoInfo
+import dev.tekofx.pinchodownloader.entities.states.DownloaderState
+import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
 import dev.tekofx.pinchodownloader.log.LogStatus
 import dev.tekofx.pinchodownloader.log.LogStore
-import dev.tekofx.pinchodownloader.states.DownloaderState
+import dev.tekofx.pinchodownloader.ytdlp.downloadYtDlp
+import dev.tekofx.pinchodownloader.ytdlp.getVideoInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update

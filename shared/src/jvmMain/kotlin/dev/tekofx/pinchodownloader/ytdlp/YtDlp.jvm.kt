@@ -1,4 +1,4 @@
-package dev.tekofx.pinchodownloader
+package dev.tekofx.pinchodownloader.ytdlp
 
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
 import dev.tekofx.pinchodownloader.log.LogStatus
@@ -8,7 +8,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.File
 import java.io.IOException
 
 actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Double) -> Unit) {
@@ -43,12 +42,6 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
     }
 }
 
-actual fun getDownloadsDir(): String {
-    val home = System.getProperty("user.home")
-    val dir = File(home, "Downloads")
-    if (!dir.exists()) dir.mkdirs()
-    return dir.absolutePath
-}
 
 actual suspend fun getVideoInfo(url: String): VideoInfoResult {
     return withContext(Dispatchers.IO) {

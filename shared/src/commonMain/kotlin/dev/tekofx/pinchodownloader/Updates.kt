@@ -1,16 +1,19 @@
 package dev.tekofx.pinchodownloader
 
 import dev.tekofx.pinchodownloader.entities.GitHubRelease
+import dev.tekofx.pinchodownloader.log.LogStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.net.URI
 
+private val json = Json { ignoreUnknownKeys = true }
+
 suspend fun getLatestYtDlpGithubRelease(): String? = withContext(Dispatchers.IO) {
     try {
         val url = URI.create("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest").toURL()
         val response = url.readText()
-        val release = Json { ignoreUnknownKeys = true }.decodeFromString<GitHubRelease>(response)
+        val release = json.decodeFromString<GitHubRelease>(response)
         release.tag_name
     } catch (e: Exception) {
         e.printStackTrace()
@@ -26,15 +29,16 @@ suspend fun getInstalledYtDlpVersion(): String? = withContext(Dispatchers.IO) {
         process.waitFor()
         version
     } catch (e: Exception) {
+        LogStore.error("Get Installed YtDlp Version", e.stackTraceToString())
         null
     }
 }
 
 suspend fun checkYtDlpUpdate(): Boolean {
     val installed = getInstalledYtDlpVersion() ?: return false
-    println("Yt-Dlp current version: $installed")
+    LogStore.debug("checkYtDlpUpdate", "Yt-Dlp current version: $installed")
     val latest = getLatestYtDlpGithubRelease()
-    println("Yt-dlp Github Version: $latest")
+    LogStore.debug("checkYtDlpUpdate", "Yt-dlp Github Version: $latest")
     return installed != latest
 }
 
@@ -42,10 +46,10 @@ suspend fun getLatestPinchoDownloaderGithubVersion(): String? = withContext(Disp
     try {
         val url = URI.create("https://api.github.com/repos/tekofx/pinchodownloader/releases/latest").toURL()
         val response = url.readText()
-        val release = Json { ignoreUnknownKeys = true }.decodeFromString<GitHubRelease>(response)
+        val release = json.decodeFromString<GitHubRelease>(response)
         release.tag_name
     } catch (e: Exception) {
-        e.printStackTrace()
+        LogStore.error("getLatestPinchoDownloaderGithubVersion", e.stackTraceToString())
         null
     }
 }
@@ -56,8 +60,10 @@ fun getAppVersion(): String {
 
 suspend fun checkPinchoDownloaderUpdate(): Boolean {
     val latest = getLatestPinchoDownloaderGithubVersion() // from previous answer
-    println("App github version: $latest")
+    LogStore.debug("checkPinchoDownloaderUpdate", "App github version: $latest")
+
     val currentVersion = getAppVersion()
-    println("App current version: $currentVersion")
+    LogStore.debug("checkPinchoDownloaderUpdate", "App current version: $currentVersion")
+
     return currentVersion != latest
 }
