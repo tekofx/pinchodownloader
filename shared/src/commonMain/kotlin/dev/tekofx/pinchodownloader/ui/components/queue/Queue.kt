@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.tekofx.pinchodownloader.entities.ButtonVariant
 import dev.tekofx.pinchodownloader.entities.Video
-import dev.tekofx.pinchodownloader.ui.components.TextIconButton
+import dev.tekofx.pinchodownloader.ui.components.input.TextIconButton
 import dev.tekofx.pinchodownloader.ui.components.video.VideosList
 
 @Composable

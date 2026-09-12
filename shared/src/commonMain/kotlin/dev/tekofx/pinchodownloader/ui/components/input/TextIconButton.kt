@@ -1,4 +1,4 @@
-package dev.tekofx.pinchodownloader.ui.components
+package dev.tekofx.pinchodownloader.ui.components.input
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer

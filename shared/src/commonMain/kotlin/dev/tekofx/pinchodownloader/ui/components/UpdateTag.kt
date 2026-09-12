@@ -17,6 +17,7 @@ import dev.tekofx.pinchodownloader.checkPinchoDownloaderUpdate
 import dev.tekofx.pinchodownloader.checkYtDlpUpdate
 import dev.tekofx.pinchodownloader.entities.UpdateState
 import dev.tekofx.pinchodownloader.log.LogStore
+import dev.tekofx.pinchodownloader.ui.components.input.TextIconButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
