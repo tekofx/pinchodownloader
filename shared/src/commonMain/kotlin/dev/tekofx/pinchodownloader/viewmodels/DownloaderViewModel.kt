@@ -23,10 +23,10 @@ class DownloaderViewModel : ViewModel() {
     private val _snackbar = MutableStateFlow<String?>(null)
     val snackbar: StateFlow<String?> = _snackbar
 
-    fun addToQueue(url: String) {
+    fun addToQueue() {
         _state.update { it.copy(loading = true) }
         viewModelScope.launch {
-            when (val result = getVideoInfo(url)) {
+            when (val result = getVideoInfo(_state.value.url)) {
                 is VideoInfoResult.Success -> {
                     if (_state.value.videos.any { it.url == result.url }) {
                         _snackbar.value = "Video already in queue"
@@ -37,12 +37,13 @@ class DownloaderViewModel : ViewModel() {
                                     id = s.videos.size + 1,
                                     title = result.title,
                                     thumbnail = result.thumbnail,
-                                    url = url,
+                                    url = state.value.url,
                                     format = result.format
                                 )
                             )
                         }
                     }
+                    onUrlChange("")
                 }
 
                 is VideoInfoResult.Error -> {
@@ -76,6 +77,14 @@ class DownloaderViewModel : ViewModel() {
             }
             _state.update { it.copy(progress = 1f, status = "Done", downloading = false) }
         }
+    }
+
+    fun onUrlChange(url: String) {
+        _state.update { it.copy(url = url) }
+    }
+
+    fun toggleLogs() {
+        _state.update { it.copy(showLogs = !it.showLogs) }
     }
 
     fun clearCompleted() {

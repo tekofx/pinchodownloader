@@ -7,5 +7,7 @@ data class DownloaderState(
     val progress: Float = 0f,
     val status: String? = null,
     val loading: Boolean = false,
-    val downloading: Boolean = false
+    val downloading: Boolean = false,
+    val url: String = "",
+    val showLogs: Boolean = false
 )
