@@ -22,40 +22,33 @@ import coil3.compose.AsyncImage
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 
+
 @Composable
 fun VideoCard(video: Video, modifier: Modifier) {
     Card(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(10.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(columnSpacing),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.weight(1f, fill = false)
-            ) {
-                Text(text = video.id.toString())
-                AsyncImage(
-                    model = video.thumbnail,
-                    contentDescription = null,
-                    modifier = Modifier.size(96.dp, 54.dp),
-                    contentScale = ContentScale.Crop
-                )
-                Text(
-                    text = video.title,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
 
+            Text(
+                text = video.id.toString(), modifier = Modifier.weight(layout.id)
+            )
+            AsyncImage(
+                model = video.thumbnail,
+                contentDescription = null,
+                modifier = Modifier.weight(layout.thumbnail).height(54.dp),
+                contentScale = ContentScale.Crop
+            )
+            Text(
+                text = video.title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(layout.title)
+            )
 
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.wrapContentWidth()
-            ) {
+            Row(modifier = Modifier.weight(layout.format)) {
                 Card(
                     colors = CardDefaults.cardColors().copy(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -70,38 +63,33 @@ fun VideoCard(video: Video, modifier: Modifier) {
                         Text(text = video.format)
                     }
                 }
+            }
 
-
+            Row(
+                modifier = Modifier.weight(layout.status),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 AnimatedContent(
-                    targetState = video.status,
-                    transitionSpec = {
+                    targetState = video.status, transitionSpec = {
                         fadeIn(tween(300)) togetherWith fadeOut(tween(300))
-                    },
-                    modifier = Modifier.size(24.dp) // fixed size so layout doesn't jump
+                    }, modifier = Modifier.size(24.dp) // fixed size so layout doesn't jump
                 ) { status ->
                     when (status) {
                         TaskStatus.PENDING -> Icon(
-                            imageVector = Icons.Filled.HourglassBottom,
-                            contentDescription = null,
-                            tint = status.color
+                            imageVector = Icons.Filled.HourglassBottom, contentDescription = null, tint = status.color
                         )
 
                         TaskStatus.IN_PROGRESS -> CircularProgressIndicator(
-                            progress = { video.progress },
-                            color = status.color,
-                            modifier = Modifier.fillMaxSize()
+                            progress = { video.progress }, color = status.color, modifier = Modifier.fillMaxSize()
                         )
 
                         TaskStatus.COMPLETED -> Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = null,
-                            tint = status.color
+                            imageVector = Icons.Filled.Check, contentDescription = null, tint = status.color
                         )
 
                         TaskStatus.ERROR -> Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = null,
-                            tint = status.color
+                            imageVector = Icons.Filled.Close, contentDescription = null, tint = status.color
                         )
                     }
                 }
