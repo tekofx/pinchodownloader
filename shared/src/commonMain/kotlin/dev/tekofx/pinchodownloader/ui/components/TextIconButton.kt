@@ -16,6 +16,7 @@ fun TextIconButton(
     onClick: () -> Unit,
     icon: ImageVector,
     text: String,
+    enabled: Boolean = true,
     variant: ButtonVariant = ButtonVariant.Filled,
     colors: ButtonColors = ButtonDefaults.buttonColors(),
 ) {
@@ -27,7 +28,12 @@ fun TextIconButton(
     }
 
     when (variant) {
-        ButtonVariant.Filled -> Button(onClick = onClick, colors = colors, content = content)
-        ButtonVariant.Outlined -> OutlinedButton(onClick = onClick, colors = colors, content = content)
+        ButtonVariant.Filled -> Button(
+            onClick = onClick, colors = colors, enabled = enabled, content = content
+        )
+
+        ButtonVariant.Outlined -> OutlinedButton(
+            onClick = onClick, colors = colors, enabled = enabled, content = content
+        )
     }
 }

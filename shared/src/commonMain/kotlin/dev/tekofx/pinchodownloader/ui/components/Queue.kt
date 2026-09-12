@@ -51,7 +51,9 @@ fun Queue(
                 horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()
             ) {
                 TextIconButton(
-                    onClick = onDownloadAll, icon = Icons.Filled.Download, text = "Download All"
+                    onClick = onDownloadAll, icon = Icons.Filled.Download, text = "Download All",
+                    enabled = !downloading
+
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
