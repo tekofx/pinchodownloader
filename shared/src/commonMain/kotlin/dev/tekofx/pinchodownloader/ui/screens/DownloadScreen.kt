@@ -35,7 +35,8 @@ fun DownloaderScreen() {
     var loading by remember { mutableStateOf(false) }
     var downloading by remember { mutableStateOf(false) }
     var showLogs by remember { mutableStateOf(false) }
-
+    var message by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     fun pasteFromClipboard(): String? {
         return try {
@@ -49,6 +50,24 @@ fun DownloaderScreen() {
         loading = true
         when (val result = getVideoInfo(url)) {
             is VideoInfoResult.Success -> {
+
+                if (videos.any { it.url == result.url }) {
+                    val result = snackbarHostState.showSnackbar(
+                        message = "Video already in queue",
+                        actionLabel = "Close",
+                        duration = SnackbarDuration.Short
+                    )
+                    when (result) {
+                        SnackbarResult.ActionPerformed -> { /* undo */
+                        }
+
+                        SnackbarResult.Dismissed -> { /* ignored */
+                        }
+                    }
+
+                    return
+                }
+
                 videos.add(
                     Video(
                         id = videos.size + 1,
@@ -72,7 +91,8 @@ fun DownloaderScreen() {
     Scaffold(
         topBar = {
             AppTitle(onIconClick = { showLogs = true })
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier.fillMaxSize().padding(paddingValues = paddingValues).padding(20.dp),

@@ -6,6 +6,8 @@
 - Buttons "Clear Completed" and "Clear Failed"
 - Added format in video card
 - Tag with how many elements are in queue
+- Check if video is already on queue
+- Snackbar for displaying feedback messages
 
 ### Improvements
 
