@@ -11,6 +11,7 @@
 - Snackbar for displaying feedback messages
 - Individual button to remove video from queue
 - Feedback when url pasted is not a video
+- Check if url is valid
 
 ### Improvements
 

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.net.URI
 
 class DownloaderViewModel : ViewModel() {
     private val _state = MutableStateFlow(DownloaderState())
@@ -24,6 +25,12 @@ class DownloaderViewModel : ViewModel() {
     val snackbar: StateFlow<String?> = _snackbar
 
     fun addToQueue() {
+
+        if (!isValidUrl(_state.value.url)) {
+            _snackbar.value = "Url not valid"
+            return
+        }
+
         _state.update { it.copy(loading = true) }
         viewModelScope.launch {
             when (val result = getVideoInfo(_state.value.url)) {
@@ -52,6 +59,15 @@ class DownloaderViewModel : ViewModel() {
             }
             _state.update { it.copy(loading = false) }
         }
+    }
+
+
+    fun isValidUrl(url: String): Boolean = try {
+        val uri = URI(url)
+        uri.scheme != null && uri.host != null
+    } catch (e: Exception) {
+        LogStore.error("isValidUrl", e.printStackTrace().toString())
+        false
     }
 
     fun downloadAll() {
