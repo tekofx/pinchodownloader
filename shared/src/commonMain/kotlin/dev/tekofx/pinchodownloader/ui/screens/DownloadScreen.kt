@@ -138,42 +138,43 @@ fun DownloaderScreen() {
         }
 
 
-        AnimatedVisibility(visible = videos.isNotEmpty()) {
 
 
-            Queue(
-                videos = videos,
-                downloading = downloading,
-                progress = progress,
-                onDownloadAll = {
-                    scope.launch {
-                        downloading = true
-                        for (i in videos.indices) {
-                            videos[i] = videos[i].copy(status = TaskStatus.IN_PROGRESS)  // ← new instance
-                            try {
-                                downloadYtDlp(videos[i].url, getDownloadsDir()) { p ->
-                                    videos[i] = videos[i].copy(progress = p.toFloat())
-                                    progress = (i + p).toFloat() / videos.size
-                                }
-                            } catch (e: RuntimeException) {
-                                LogStore.log(
-                                    tag = "YT-Dlp Download",
-                                    message = e.message ?: "Unknown error",
-                                    status = LogStatus.ERROR
-                                )
-                                videos[i].status = TaskStatus.ERROR
+        Queue(
+            videos = videos,
+            downloading = downloading,
+            progress = progress,
+            onDownloadAll = {
+                scope.launch {
+                    downloading = true
+                    for (i in videos.indices) {
+                        videos[i] = videos[i].copy(status = TaskStatus.IN_PROGRESS)  // ← new instance
+                        try {
+                            downloadYtDlp(videos[i].url, getDownloadsDir()) { p ->
+                                videos[i] = videos[i].copy(progress = p.toFloat())
+                                progress = (i + p).toFloat() / videos.size
                             }
-                            videos[i] = videos[i].copy(status = TaskStatus.COMPLETED)   // ← new instance
+                        } catch (e: RuntimeException) {
+                            LogStore.log(
+                                tag = "YT-Dlp Download",
+                                message = e.message ?: "Unknown error",
+                                status = LogStatus.ERROR
+                            )
+                            videos[i].status = TaskStatus.ERROR
                         }
-                        progress = 1f
-                        status = "Done"
-                        downloading = false
+                        videos[i] = videos[i].copy(status = TaskStatus.COMPLETED)   // ← new instance
                     }
-                },
-                onClear = { videos.clear() }
+                    progress = 1f
+                    status = "Done"
+                    downloading = false
+                }
+            },
+            onClearAll = { videos.clear() },
+            onClearCompleted = {
+                videos.removeAll { it.status == TaskStatus.COMPLETED }
+            }
 
-            )
-        }
+        )
 
 
     }

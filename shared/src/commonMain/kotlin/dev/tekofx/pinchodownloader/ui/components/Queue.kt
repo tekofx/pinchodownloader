@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ClearAll
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Queue
-import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.DownloadDone
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,53 +27,69 @@ fun Queue(
     downloading: Boolean,
     progress: Float,
     onDownloadAll: () -> Unit,
-    onClear: () -> Unit,
+    onClearAll: () -> Unit,
+    onClearCompleted: () -> Unit,
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+    AnimatedVisibility(videos.isNotEmpty()) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(Icons.Filled.Queue, contentDescription = null)
-            Text(
-                "Queue",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
 
 
-        if (videos.isEmpty()) {
-            Text(
-                "Queue Empty",
-            )
-        }
-
-        AnimatedVisibility(videos.isNotEmpty()) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    "Queue",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+
+            }
+
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 TextIconButton(
                     onClick = onDownloadAll,
                     icon = Icons.Filled.Download,
                     text = "Download All"
                 )
-                TextIconButton(
-                    onClick = onClear,
-                    icon = Icons.Filled.ClearAll,
-                    text = "Clear Queue",
-                    variant = ButtonVariant.Outlined
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    TextIconButton(
+                        onClick = onClearAll,
+                        icon = Icons.Filled.DeleteSweep,
+                        text = "Clear All",
+                        variant = ButtonVariant.Outlined,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        ),
+                    )
+                    TextIconButton(
+                        onClick = onClearCompleted,
+                        icon = Icons.Filled.DownloadDone,
+                        text = "Clear Completed",
+                        variant = ButtonVariant.Outlined,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary,
+                            contentColor = MaterialTheme.colorScheme.onTertiary
+                        ),
+                    )
+                }
             }
-        }
 
-        AnimatedVisibility(downloading) {
-            LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+            AnimatedVisibility(downloading) {
+                LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+            }
+            VideosList(videos)
         }
-        VideosList(videos)
     }
 
 }
