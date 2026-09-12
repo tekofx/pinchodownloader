@@ -43,6 +43,10 @@ kotlin {
             // Datetime
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.6.x-compat")
 
+            // Viewmodel
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel:2.10.0")
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+
         }
 
         commonTest.dependencies {
