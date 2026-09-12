@@ -36,6 +36,10 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
             pct.toDoubleOrNull()?.let { onProgress(it / 100.0) }
         }
         proc.waitFor()
+        val exitCode = proc.waitFor()
+        if (exitCode != 0) {
+            throw RuntimeException("yt-dlp exited with code $exitCode")
+        }
     }
 }
 

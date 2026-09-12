@@ -16,6 +16,8 @@ import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
 import dev.tekofx.pinchodownloader.getDownloadsDir
 import dev.tekofx.pinchodownloader.getVideoInfo
+import dev.tekofx.pinchodownloader.log.LogStatus
+import dev.tekofx.pinchodownloader.log.LogStore
 import dev.tekofx.pinchodownloader.ui.components.AppTitle
 import dev.tekofx.pinchodownloader.ui.components.LogView
 import dev.tekofx.pinchodownloader.ui.components.Queue
@@ -144,9 +146,18 @@ fun DownloaderScreen() {
                     downloading = true
                     for (i in videos.indices) {
                         videos[i] = videos[i].copy(status = TaskStatus.IN_PROGRESS)  // ← new instance
-                        downloadYtDlp(videos[i].url, getDownloadsDir()) { p ->
-                            videos[i] = videos[i].copy(progress = p.toFloat())
-                            progress = (i + p).toFloat() / videos.size
+                        try {
+                            downloadYtDlp(videos[i].url, getDownloadsDir()) { p ->
+                                videos[i] = videos[i].copy(progress = p.toFloat())
+                                progress = (i + p).toFloat() / videos.size
+                            }
+                        } catch (e: RuntimeException) {
+                            LogStore.log(
+                                tag = "YT-Dlp Download",
+                                message = e.message ?: "Unknown error",
+                                status = LogStatus.ERROR
+                            )
+                            videos[i].status = TaskStatus.ERROR
                         }
                         videos[i] = videos[i].copy(status = TaskStatus.COMPLETED)   // ← new instance
                     }

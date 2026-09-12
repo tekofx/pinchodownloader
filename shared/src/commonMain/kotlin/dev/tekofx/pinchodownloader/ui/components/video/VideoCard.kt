@@ -8,6 +8,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material3.*
@@ -93,6 +94,12 @@ fun VideoCard(video: Video, modifier: Modifier) {
 
                         TaskStatus.COMPLETED -> Icon(
                             imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = status.color
+                        )
+
+                        TaskStatus.ERROR -> Icon(
+                            imageVector = Icons.Filled.Close,
                             contentDescription = null,
                             tint = status.color
                         )
