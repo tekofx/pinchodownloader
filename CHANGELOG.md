@@ -1,8 +1,8 @@
-## Unreleased
+## 1.2.0 - 2026/09/12
 
 ### Added
 
-- Added _**Loading Cat**_
+- Added _**Loading Cat**_ 🐱
 - Added log view
 - Buttons "Clear Completed" and "Clear Failed"
 - Added format in video card
@@ -11,7 +11,6 @@
 - Snackbar for displaying feedback messages
 - Individual button to remove video from queue
 - Feedback when url pasted is not a video
-- Check if url is valid
 
 ### Improvements
 
