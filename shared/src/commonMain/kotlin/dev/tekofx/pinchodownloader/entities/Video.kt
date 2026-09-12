@@ -5,6 +5,9 @@ data class Video(
     val title: String,
     val thumbnail: String,
     val url: String,
+    val format: String,
+
+
     var status: TaskStatus = TaskStatus.PENDING,
     var progress: Float = 0f
 )

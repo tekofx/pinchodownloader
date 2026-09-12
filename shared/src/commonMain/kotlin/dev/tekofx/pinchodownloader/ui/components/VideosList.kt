@@ -6,10 +6,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.VideoSettings
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +57,21 @@ fun VideoCard(video: Video, modifier: Modifier) {
                     contentScale = ContentScale.Crop
                 )
                 Text(text = video.title)
+
+                Card(
+                    colors = CardDefaults.cardColors().copy(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(imageVector = Icons.Default.VideoSettings, contentDescription = null)
+                        Text(text = video.format)
+                    }
+                }
             }
 
             Row(

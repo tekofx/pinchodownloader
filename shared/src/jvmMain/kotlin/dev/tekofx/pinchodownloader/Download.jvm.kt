@@ -17,10 +17,14 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
             "--newline",
             "--progress-template", "download:%(progress._percent_str)s",
             "--extractor-args", "youtube:player-client=web_embedded,web,tv",
+            "--remote-components", "ejs:github",
             url
         ).redirectErrorStream(true).start()
 
+
+
         proc.inputStream.bufferedReader().forEachLine { line ->
+            println(line)
             val pct = line.removePrefix("download:").trim().removeSuffix("%")
             pct.toDoubleOrNull()?.let { onProgress(it / 100.0) }
         }
@@ -58,7 +62,10 @@ actual suspend fun getVideoInfo(url: String): VideoInfoResult {
             val thumbnail = obj["thumbnail"]?.jsonPrimitive?.content
                 ?: return@withContext VideoInfoResult.Error("No thumbnail in response")
 
-            VideoInfoResult.Success(title, thumbnail, url)
+            val formatNote = obj["format_note"]?.jsonPrimitive?.content?.substringBefore("+")
+                ?: return@withContext VideoInfoResult.Error("No format note in response")
+
+            VideoInfoResult.Success(title, thumbnail, url, formatNote)
 
         } catch (e: IOException) {
             VideoInfoResult.Error("yt-dlp not found: ${e.message}")

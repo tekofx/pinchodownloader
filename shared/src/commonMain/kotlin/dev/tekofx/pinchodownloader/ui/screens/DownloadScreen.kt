@@ -51,7 +51,8 @@ fun DownloaderScreen() {
                         id = videos.size + 1,
                         title = result.title,
                         thumbnail = result.thumbnail,
-                        url = url
+                        url = url,
+                        format = result.format
                     )
                 )
                 url = ""
