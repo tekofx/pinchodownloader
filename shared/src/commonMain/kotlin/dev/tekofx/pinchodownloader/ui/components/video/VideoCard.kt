@@ -1,41 +1,25 @@
-package dev.tekofx.pinchodownloader.ui.components
+package dev.tekofx.pinchodownloader.ui.components.video
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
-
-
-@Composable
-fun VideosList(videos: List<Video>) {
-    LazyColumn(
-        modifier = Modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(videos, key = { it.id }) { video ->
-            VideoCard(
-                video = video,
-                modifier = Modifier.animateItem(
-
-                )
-            )
-        }
-    }
-}
-
 
 @Composable
 fun VideoCard(video: Video, modifier: Modifier) {
@@ -48,6 +32,7 @@ fun VideoCard(video: Video, modifier: Modifier) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f, fill = false)
             ) {
                 Text(text = video.id.toString())
                 AsyncImage(
@@ -56,8 +41,20 @@ fun VideoCard(video: Video, modifier: Modifier) {
                     modifier = Modifier.size(96.dp, 54.dp),
                     contentScale = ContentScale.Crop
                 )
-                Text(text = video.title)
+                Text(
+                    text = video.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
 
+
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.wrapContentWidth()
+            ) {
                 Card(
                     colors = CardDefaults.cardColors().copy(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -72,26 +69,36 @@ fun VideoCard(video: Video, modifier: Modifier) {
                         Text(text = video.format)
                     }
                 }
-            }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                AnimatedVisibility(visible = video.status == TaskStatus.IN_PROGRESS) {
-                    CircularProgressIndicator(
-                        progress = { video.progress },
-                        color = TaskStatus.IN_PROGRESS.color
-                    )
+
+                AnimatedContent(
+                    targetState = video.status,
+                    transitionSpec = {
+                        fadeIn(tween(300)) togetherWith fadeOut(tween(300))
+                    },
+                    modifier = Modifier.size(24.dp) // fixed size so layout doesn't jump
+                ) { status ->
+                    when (status) {
+                        TaskStatus.PENDING -> Icon(
+                            imageVector = Icons.Filled.HourglassBottom,
+                            contentDescription = null,
+                            tint = status.color
+                        )
+
+                        TaskStatus.IN_PROGRESS -> CircularProgressIndicator(
+                            progress = { video.progress },
+                            color = status.color,
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        TaskStatus.COMPLETED -> Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = status.color
+                        )
+                    }
                 }
 
-                AnimatedVisibility(visible = video.status == TaskStatus.COMPLETED) {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = null,
-                        tint = TaskStatus.COMPLETED.color
-                    )
-                }
 
                 Text(text = video.status.label, color = video.status.color)
             }
