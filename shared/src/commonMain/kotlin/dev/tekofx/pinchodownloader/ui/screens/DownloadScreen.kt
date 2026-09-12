@@ -39,8 +39,7 @@ fun DownloaderScreen() {
 
     fun pasteFromClipboard(): String? {
         return try {
-            Toolkit.getDefaultToolkit().systemClipboard
-                .getData(DataFlavor.stringFlavor) as? String
+            Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as? String
         } catch (_: Exception) {
             null
         }
@@ -69,29 +68,31 @@ fun DownloaderScreen() {
         loading = false
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        AnimatedVisibility(visible = showLogs)
-        {
-            LogView(onCloseClick = { showLogs = false })
+
+    Scaffold(
+        topBar = {
+            AppTitle(onIconClick = { showLogs = true })
         }
-
-
-        AppTitle(onIconClick = { showLogs = true })
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(paddingValues = paddingValues).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
-                value = url,
-                onValueChange = { url = it },
-                label = { Text("Video URL") },
-                singleLine = true,
-                modifier = Modifier
-                    .weight(1f)
-                    .onPreviewKeyEvent { event ->
+            AnimatedVisibility(visible = showLogs) {
+                LogView(onCloseClick = { showLogs = false })
+            }
+
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedTextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    label = { Text("Video URL") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f).onPreviewKeyEvent { event ->
                         if (event.type == KeyEventType.KeyDown && event.key == Key.Enter) {
                             if (url.isNotBlank()) {
                                 scope.launch {
@@ -103,48 +104,43 @@ fun DownloaderScreen() {
                         } else {
                             false
                         }
-                    }
-            )
-            IconButton(
-                onClick = {
-                    val clipboardContent = pasteFromClipboard()
-                    if (clipboardContent != null) {
-                        url = clipboardContent
-                    }
-                    scope.launch {
-                        addToQueue()
-                        url = ""
-                    }
-                },
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.ContentPaste,
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    contentDescription = null
-                )
-            }
-        }
-
-        AnimatedVisibility(visible = loading) {
-            Card {
-                Row(
-                    modifier = Modifier.padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    })
+                IconButton(
+                    onClick = {
+                        val clipboardContent = pasteFromClipboard()
+                        if (clipboardContent != null) {
+                            url = clipboardContent
+                        }
+                        scope.launch {
+                            addToQueue()
+                            url = ""
+                        }
+                    },
                 ) {
-                    Text("Adding video")
-                    LoadingIndicator()
+                    Icon(
+                        imageVector = Icons.Filled.ContentPaste,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        contentDescription = null
+                    )
                 }
             }
-        }
+
+            AnimatedVisibility(visible = loading) {
+                Card {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("Adding video")
+                        LoadingIndicator()
+                    }
+                }
+            }
 
 
 
 
-        Queue(
-            videos = videos,
-            downloading = downloading,
-            progress = progress,
-            onDownloadAll = {
+            Queue(videos = videos, downloading = downloading, progress = progress, onDownloadAll = {
                 scope.launch {
                     downloading = true
                     for (i in videos.indices) {
@@ -168,14 +164,13 @@ fun DownloaderScreen() {
                     status = "Done"
                     downloading = false
                 }
-            },
-            onClearAll = { videos.clear() },
-            onClearCompleted = {
+            }, onClearAll = { videos.clear() }, onClearCompleted = {
                 videos.removeAll { it.status == TaskStatus.COMPLETED }
             }
 
-        )
+            )
 
+        }
 
     }
 }
