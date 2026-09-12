@@ -111,10 +111,8 @@ fun UpdateTag(
     AnimatedVisibility(visible = globalUpdateState == UpdateState.UpdateAvailable) {
         IconButton(
             onClick = { showDialog = true },
-            colors = IconButtonDefaults.iconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,   // background
-                contentColor = MaterialTheme.colorScheme.onPrimary            // icon tint
-            )
+            shape = IconButtonDefaults.extraLargeRoundShape,
+            colors = IconButtonDefaults.filledIconButtonColors()
         ) {
             Icon(
                 modifier = Modifier.size(30.dp), imageVector = Icons.Filled.Download, contentDescription = null
