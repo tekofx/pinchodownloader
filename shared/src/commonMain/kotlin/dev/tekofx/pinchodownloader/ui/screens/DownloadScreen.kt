@@ -1,6 +1,7 @@
 package dev.tekofx.pinchodownloader.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,7 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tekofx.pinchodownloader.pasteFromClipboard
-import dev.tekofx.pinchodownloader.ui.components.*
+import dev.tekofx.pinchodownloader.ui.components.AppTitle
+import dev.tekofx.pinchodownloader.ui.components.LoadingCard
+import dev.tekofx.pinchodownloader.ui.components.LogView
+import dev.tekofx.pinchodownloader.ui.components.UrlInputRow
+import dev.tekofx.pinchodownloader.ui.components.queue.EmptyQueue
+import dev.tekofx.pinchodownloader.ui.components.queue.Queue
 import dev.tekofx.pinchodownloader.viewmodels.DownloaderViewModel
 
 @Composable
@@ -37,13 +43,9 @@ fun DownloaderScreen(
 
     Scaffold(
         topBar = { AppTitle(onIconClick = { showLogs = true }) },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(20.dp),
+            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -59,22 +61,41 @@ fun DownloaderScreen(
                     pasteFromClipboard()?.let { url = it }
                     viewModel.addToQueue(url)
                     url = ""
-                }
-            )
+                })
 
             AnimatedVisibility(visible = state.loading) {
                 LoadingCard()
             }
 
-            Queue(
-                videos = state.videos,
-                downloading = state.downloading,
-                progress = state.progress,
-                onDownloadAll = viewModel::downloadAll,
-                onClearAll = viewModel::clearAll,
-                onClearCompleted = viewModel::clearCompleted,
-                onDeleteVideo = { viewModel.deleteVideo(it) },
-            )
+            /* AnimatedVisibility(visible = state.videos.isNotEmpty()) {
+                 Queue(
+                     videos = state.videos,
+                     downloading = state.downloading,
+                     progress = state.progress,
+                     onDownloadAll = viewModel::downloadAll,
+                     onClearAll = viewModel::clearAll,
+                     onClearCompleted = viewModel::clearCompleted,
+                     onDeleteVideo = { viewModel.deleteVideo(it) },
+                 )
+             }*/
+
+            AnimatedContent(
+                targetState = state.videos.isNotEmpty(), transitionSpec = {
+                    slideInVertically(tween(300)) { it / 4 } + fadeIn(tween(300)) togetherWith slideOutVertically(
+                        tween(300)
+                    ) { -it / 4 } + fadeOut(tween(300))
+                }) { showSecondState ->
+                if (showSecondState) Queue(
+                    videos = state.videos,
+                    downloading = state.downloading,
+                    progress = state.progress,
+                    onDownloadAll = viewModel::downloadAll,
+                    onClearAll = viewModel::clearAll,
+                    onClearCompleted = viewModel::clearCompleted,
+                    onDeleteVideo = { viewModel.deleteVideo(it) },
+                ) else EmptyQueue()
+            }
+
         }
     }
 }

@@ -47,6 +47,10 @@ kotlin {
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel:2.10.0")
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
 
+            // Lottie animations
+            implementation("io.github.alexzhirkevich:compottie:2.2.2")
+            implementation("io.github.alexzhirkevich:compottie-resources:2.2.2")
+
         }
 
         commonTest.dependencies {
