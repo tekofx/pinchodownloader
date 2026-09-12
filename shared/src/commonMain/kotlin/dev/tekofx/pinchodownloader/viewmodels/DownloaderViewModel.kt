@@ -7,7 +7,6 @@ import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoInfoResult
 import dev.tekofx.pinchodownloader.entities.states.DownloaderState
 import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
-import dev.tekofx.pinchodownloader.log.LogStatus
 import dev.tekofx.pinchodownloader.log.LogStore
 import dev.tekofx.pinchodownloader.ytdlp.downloadYtDlp
 import dev.tekofx.pinchodownloader.ytdlp.getVideoInfo
@@ -72,7 +71,7 @@ class DownloaderViewModel : ViewModel() {
 
     fun downloadAll() {
         viewModelScope.launch {
-            _state.update { it.copy(downloading = true) }
+            _state.update { it.copy(progress = 0f, downloading = true, latestDownloadVideoIndex = 0) }
             val videos = _state.value.videos
 
             for (i in videos.indices) {
@@ -85,11 +84,12 @@ class DownloaderViewModel : ViewModel() {
                         }
                     }
                 } catch (e: RuntimeException) {
-                    LogStore.log("YT-Dlp Download", e.message ?: "Unknown", LogStatus.ERROR)
+                    LogStore.error("YT-Dlp Download", e.message ?: "Unknown")
                     updateVideo(i) { it.copy(status = TaskStatus.ERROR) }
                     continue
                 }
                 updateVideo(i) { it.copy(status = TaskStatus.COMPLETED) }
+                _state.update { s -> s.copy(latestDownloadVideoIndex = i + 1) }
             }
             _state.update { it.copy(progress = 1f, status = "Done", downloading = false) }
         }

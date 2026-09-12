@@ -1,6 +1,7 @@
 package dev.tekofx.pinchodownloader.ui.components.video
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -20,12 +22,20 @@ import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VideoCard(
     video: Video,
     modifier: Modifier,
     onDelete: () -> Unit,
 ) {
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = video.progress,
+        animationSpec = tween(300),
+        label = "progress"
+    )
+
     Card(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(10.dp).fillMaxWidth(),
@@ -81,8 +91,8 @@ fun VideoCard(
                             imageVector = Icons.Filled.HourglassBottom, contentDescription = null, tint = status.color
                         )
 
-                        TaskStatus.IN_PROGRESS -> CircularProgressIndicator(
-                            progress = { video.progress }, color = status.color, modifier = Modifier.fillMaxSize()
+                        TaskStatus.IN_PROGRESS -> CircularWavyProgressIndicator(
+                            progress = { animatedProgress }, color = status.color, modifier = Modifier.fillMaxSize()
                         )
 
                         TaskStatus.COMPLETED -> Icon(

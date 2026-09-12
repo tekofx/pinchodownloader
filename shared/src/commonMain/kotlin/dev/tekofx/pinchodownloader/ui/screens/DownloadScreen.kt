@@ -2,10 +2,7 @@ package dev.tekofx.pinchodownloader.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -30,6 +27,7 @@ fun DownloaderScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val snackbarMessage by viewModel.snackbar.collectAsState()
+
 
     LaunchedEffect(snackbarMessage) {
         snackbarMessage?.let {
@@ -60,6 +58,9 @@ fun DownloaderScreen(
                 LoadingCard()
             }
 
+
+            Spacer(modifier = Modifier.height(30.dp))
+
             AnimatedContent(
                 targetState = state.videos.isNotEmpty(), transitionSpec = {
                     slideInVertically(tween(300)) { it / 4 } + fadeIn(tween(300)) togetherWith slideOutVertically(
@@ -68,6 +69,7 @@ fun DownloaderScreen(
                 }) { showSecondState ->
                 if (showSecondState) Queue(
                     videos = state.videos,
+                    latestDownloadVideoIndex = state.latestDownloadVideoIndex,
                     downloading = state.downloading,
                     progress = state.progress,
                     onDownloadAll = viewModel::downloadAll,
