@@ -18,7 +18,7 @@ import dev.tekofx.pinchodownloader.pasteFromClipboard
 import dev.tekofx.pinchodownloader.ui.components.AppTitle
 import dev.tekofx.pinchodownloader.ui.components.LoadingCard
 import dev.tekofx.pinchodownloader.ui.components.LogView
-import dev.tekofx.pinchodownloader.ui.components.input.UrlInputRow
+import dev.tekofx.pinchodownloader.ui.components.input.UrlTextField
 import dev.tekofx.pinchodownloader.ui.components.queue.EmptyQueue
 import dev.tekofx.pinchodownloader.ui.components.queue.Queue
 import dev.tekofx.pinchodownloader.viewmodels.DownloaderViewModel
@@ -53,7 +53,7 @@ fun DownloaderScreen(
                 LogView(onCloseClick = { showLogs = false })
             }
 
-            UrlInputRow(
+            UrlTextField(
                 url = url,
                 onUrlChange = { url = it },
                 onSubmit = { viewModel.addToQueue(url); url = "" },

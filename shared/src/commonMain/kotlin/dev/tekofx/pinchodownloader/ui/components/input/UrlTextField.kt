@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.*
 
 @Composable
-fun UrlInputRow(
+fun UrlTextField(
     url: String,
     onUrlChange: (String) -> Unit,
     onSubmit: () -> Unit,
