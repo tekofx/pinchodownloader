@@ -7,10 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.HourglassBottom
-import androidx.compose.material.icons.filled.VideoSettings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,7 +21,11 @@ import dev.tekofx.pinchodownloader.entities.Video
 
 
 @Composable
-fun VideoCard(video: Video, modifier: Modifier) {
+fun VideoCard(
+    video: Video,
+    modifier: Modifier,
+    onDelete: () -> Unit,
+) {
     Card(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(10.dp).fillMaxWidth(),
@@ -96,6 +97,21 @@ fun VideoCard(video: Video, modifier: Modifier) {
 
 
                 Text(text = video.status.label, color = video.status.color)
+
+
+            }
+            Row(
+                modifier = Modifier.weight(layout.status),
+            ) {
+                IconButton(
+                    onClick = onDelete
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }

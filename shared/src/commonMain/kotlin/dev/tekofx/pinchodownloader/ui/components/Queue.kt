@@ -23,6 +23,7 @@ fun Queue(
     onDownloadAll: () -> Unit,
     onClearAll: () -> Unit,
     onClearCompleted: () -> Unit,
+    onDeleteVideo: (Int) -> Unit,
 ) {
     AnimatedVisibility(videos.isNotEmpty()) {
         Column(
@@ -84,7 +85,10 @@ fun Queue(
             AnimatedVisibility(downloading) {
                 LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
             }
-            VideosList(videos)
+            VideosList(
+                videos = videos,
+                onDeleteVideo = onDeleteVideo
+            )
         }
     }
 

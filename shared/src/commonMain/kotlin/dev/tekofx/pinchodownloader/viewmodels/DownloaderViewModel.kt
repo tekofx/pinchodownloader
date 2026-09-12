@@ -86,6 +86,10 @@ class DownloaderViewModel : ViewModel() {
         _state.update { it.copy(videos = emptyList()) }
     }
 
+    fun deleteVideo(id: Int) {
+        _state.update { s -> s.copy(videos = s.videos.filter { it.id != id }) }
+    }
+
     private fun updateVideo(index: Int, transform: (Video) -> Video) {
         _state.update { s ->
             s.copy(videos = s.videos.toMutableList().also { it[index] = transform(it[index]) })

@@ -72,7 +72,8 @@ fun DownloaderScreen(
                 progress = state.progress,
                 onDownloadAll = viewModel::downloadAll,
                 onClearAll = viewModel::clearAll,
-                onClearCompleted = viewModel::clearCompleted
+                onClearCompleted = viewModel::clearCompleted,
+                onDeleteVideo = { viewModel.deleteVideo(it) },
             )
         }
     }

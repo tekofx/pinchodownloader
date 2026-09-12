@@ -28,7 +28,10 @@ val layout = ColumnLayout()
 val columnSpacing = 15.dp
 
 @Composable
-fun VideosList(videos: List<Video>) {
+fun VideosList(
+    videos: List<Video>,
+    onDeleteVideo: (Int) -> Unit,
+) {
 
 
     LazyColumn(
@@ -68,13 +71,18 @@ fun VideosList(videos: List<Video>) {
                         text = "Status",
                         modifier = Modifier.weight(layout.status)
                     )
+                    Text(
+                        text = "Action",
+                        modifier = Modifier.weight(layout.status)
+                    )
                 }
             }
         }
         items(videos, key = { it.id }) { video ->
             VideoCard(
                 video = video,
-                modifier = Modifier.animateItem()
+                modifier = Modifier.animateItem(),
+                onDelete = { onDeleteVideo(video.id) },
             )
         }
     }
