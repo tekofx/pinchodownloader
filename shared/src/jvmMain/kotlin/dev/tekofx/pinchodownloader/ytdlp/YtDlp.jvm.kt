@@ -75,8 +75,10 @@ actual suspend fun getVideoInfo(url: String): VideoInfoResult {
             VideoInfoResult.Success(title, thumbnail, url, formatNote)
 
         } catch (e: IOException) {
+            LogStore.error("YtDlp.getVideoInfo", e.message ?: "error")
             VideoInfoResult.Error("yt-dlp not found: ${e.message}")
         } catch (e: Exception) {
+            LogStore.error("YtDlp.getVideoInfo", e.message ?: "error")
             VideoInfoResult.Error("Unexpected error: ${e.message}")
         }
     }
