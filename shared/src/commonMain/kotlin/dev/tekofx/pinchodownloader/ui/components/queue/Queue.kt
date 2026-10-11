@@ -79,6 +79,7 @@ fun Queue(
                     onClick = onClearAll,
                     icon = Icons.Filled.DeleteSweep,
                     text = "Clear All",
+                    enabled = !downloading && !loading,
                     variant = ButtonVariant.Outlined,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
@@ -90,6 +91,7 @@ fun Queue(
                     icon = Icons.Filled.DownloadDone,
                     text = "Clear Completed",
                     variant = ButtonVariant.Outlined,
+                    enabled = !downloading && !loading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.tertiary,
                         contentColor = MaterialTheme.colorScheme.onTertiary
@@ -98,7 +100,7 @@ fun Queue(
             }
         }
 
-        AnimatedVisibility(true) {
+        AnimatedVisibility(downloading) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -114,8 +116,6 @@ fun Queue(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-
-
                         AnimatedContent(
                             targetState = "$latestDownloadVideoIndex",
                             transitionSpec = {

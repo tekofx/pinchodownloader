@@ -18,6 +18,7 @@ import dev.tekofx.pinchodownloader.pasteFromClipboard
 @Composable
 fun UrlTextField(
     url: String,
+    enabled: Boolean,
     onUrlChange: (String) -> Unit,
     onSubmit: () -> Unit,
 ) {
@@ -55,15 +56,18 @@ fun UrlTextField(
                         if (url.isNotBlank()) onSubmit()
                         true
                     } else false
-                }
-        )
+                },
+            enabled = enabled,
+
+            )
         IconButton(
             onClick = {
                 pasteFromClipboard()?.let { onUrlChange(it) }
                 onSubmit()
             },
             shape = RoundedCornerShape(12.dp),
-            colors = IconButtonDefaults.filledIconButtonColors()
+            colors = IconButtonDefaults.filledIconButtonColors(),
+            enabled = enabled,
         ) {
             Icon(Icons.Filled.ContentPaste, contentDescription = null)
         }

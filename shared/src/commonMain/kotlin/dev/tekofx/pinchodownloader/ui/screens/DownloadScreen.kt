@@ -50,6 +50,7 @@ fun DownloaderScreen(
 
             UrlTextField(
                 url = state.url,
+                enabled = !state.loading,
                 onUrlChange = viewModel::onUrlChange,
                 onSubmit = viewModel::onSubmitUrl,
             )
