@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Added
+
+- Playlist download. Paste a playlist link and all videos will be added to queue
+
 ### Improved
 
 - Global downloading now shows how many videos have been downloaded and the total

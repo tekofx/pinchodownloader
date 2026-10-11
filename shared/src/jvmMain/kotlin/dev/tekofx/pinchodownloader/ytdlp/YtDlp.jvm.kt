@@ -1,13 +1,13 @@
 package dev.tekofx.pinchodownloader.ytdlp
 
-import dev.tekofx.pinchodownloader.entities.VideoInfoResult
+import dev.tekofx.pinchodownloader.entities.UrlInfoResult
+import dev.tekofx.pinchodownloader.entities.VideoInfo
 import dev.tekofx.pinchodownloader.log.LogStatus
 import dev.tekofx.pinchodownloader.log.LogStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.*
 import java.io.IOException
 
 actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Double) -> Unit) {
@@ -43,43 +43,72 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
 }
 
 
-actual suspend fun getVideoInfo(url: String): VideoInfoResult {
+@OptIn(ExperimentalSerializationApi::class)
+actual suspend fun getUrlInfo(url: String): UrlInfoResult {
     return withContext(Dispatchers.IO) {
         try {
-            val proc = ProcessBuilder("yt-dlp", "--no-warning", "-J", url)
-                .redirectErrorStream(true)
-                .start()
+            val entries = getEntries(url)
+            val videos = mutableListOf<VideoInfo>()
 
+            for (entry in entries) {
+                LogStore.debug("getUrlInfo", "entry: $entry")
+                val title = entry["title"]?.jsonPrimitive?.content
+                    ?: return@withContext UrlInfoResult.Error("No title in response")
+                val thumbnail = getThumbnail(entry)
+                    ?: return@withContext UrlInfoResult.Error("No thumbnail in response")
 
-            val json = proc.inputStream.bufferedReader().readText()
-            val exitCode = proc.waitFor()
+                val formatNote = entry["format_note"]?.jsonPrimitive?.content?.substringBefore("+")
+                    ?: return@withContext UrlInfoResult.Error("No format note in response")
 
-            if (exitCode != 0) {
-                // yt-dlp prints its error to stdout when redirectErrorStream(true)
-                LogStore.error("yt-dlp Get Video Info", "exit=$exitCode")
-                LogStore.error("yt-dlp Get Video Info", json.take(500))
-                return@withContext VideoInfoResult.Error(
-                    "yt-dlp failed (exit $exitCode): ${json.take(200)}"
-                )
+                val videoUrl = entry["webpage_url"]?.jsonPrimitive?.content
+                    ?: "https://www.youtube.com/watch?v=${entry["id"]?.jsonPrimitive?.content}"
+
+                videos.addLast(VideoInfo(title, thumbnail, videoUrl, formatNote))
             }
 
-            val obj = Json.parseToJsonElement(json).jsonObject
-            val title = obj["title"]?.jsonPrimitive?.content
-                ?: return@withContext VideoInfoResult.Error("No title in response")
-            val thumbnail = obj["thumbnail"]?.jsonPrimitive?.content
-                ?: return@withContext VideoInfoResult.Error("No thumbnail in response")
+            if (videos.size > 1) {
+                UrlInfoResult.Playlist(videos)
+            } else
+                UrlInfoResult.SingleVideo(videos.first())
 
-            val formatNote = obj["format_note"]?.jsonPrimitive?.content?.substringBefore("+")
-                ?: return@withContext VideoInfoResult.Error("No format note in response")
-
-            VideoInfoResult.Success(title, thumbnail, url, formatNote)
 
         } catch (e: IOException) {
-            LogStore.error("YtDlp.getVideoInfo", e.message ?: "error")
-            VideoInfoResult.Error("yt-dlp not found: ${e.message}")
+            LogStore.error("yt-dlp", e.message ?: "IO error")
+            return@withContext UrlInfoResult.Error("yt-dlp not found: ${e.message}")
+        } catch (e: JsonException) {
+            LogStore.error("yt-dlp", "JSON parse error: ${e.message}")
+            return@withContext UrlInfoResult.Error("Invalid JSON from yt-dlp")
         } catch (e: Exception) {
-            LogStore.error("YtDlp.getVideoInfo", e.message ?: "error")
-            VideoInfoResult.Error("Unexpected error: ${e.message}")
+            LogStore.error("yt-dlp", e.message ?: "unexpected")
+            return@withContext UrlInfoResult.Error("Unexpected error: ${e.message}")
         }
+
+
     }
+}
+
+
+fun getEntries(url: String): List<JsonObject> {
+    val process = ProcessBuilder("yt-dlp", "-J", url)
+        .redirectErrorStream(false).start()
+    val json = process.inputStream.bufferedReader().readText()
+    process.waitFor()
+
+    val root = Json.parseToJsonElement(json).jsonObject
+
+    return (root["entries"] as? JsonArray)
+        ?.filterIsInstance<JsonObject>()   // ← drops JsonNull entries
+        ?: listOf(root)
+}
+
+fun getThumbnail(entry: JsonObject): String? {
+    // 1. Direct string (resolved)
+    entry["thumbnail"]?.jsonPrimitive?.content?.let { return it }
+
+    // 2. Array of thumbnail objects — pick the largest
+    val arr = entry["thumbnails"] as? JsonArray ?: return null
+    return arr
+        .filterIsInstance<JsonObject>()
+        .maxByOrNull { (it["width"]?.jsonPrimitive?.int ?: 0) }
+        ?.get("url")?.jsonPrimitive?.content
 }

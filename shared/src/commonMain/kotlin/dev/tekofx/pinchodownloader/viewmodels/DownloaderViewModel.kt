@@ -3,13 +3,14 @@ package dev.tekofx.pinchodownloader.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.tekofx.pinchodownloader.entities.TaskStatus
+import dev.tekofx.pinchodownloader.entities.UrlInfoResult
 import dev.tekofx.pinchodownloader.entities.Video
-import dev.tekofx.pinchodownloader.entities.VideoInfoResult
+import dev.tekofx.pinchodownloader.entities.VideoInfo
 import dev.tekofx.pinchodownloader.entities.states.DownloaderState
 import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
 import dev.tekofx.pinchodownloader.log.LogStore
 import dev.tekofx.pinchodownloader.ytdlp.downloadYtDlp
-import dev.tekofx.pinchodownloader.ytdlp.getVideoInfo
+import dev.tekofx.pinchodownloader.ytdlp.getUrlInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -23,7 +24,7 @@ class DownloaderViewModel : ViewModel() {
     private val _snackbar = MutableStateFlow<String?>(null)
     val snackbar: StateFlow<String?> = _snackbar
 
-    fun addToQueue() {
+    fun onSubmitUrl() {
 
         if (!isValidUrl(_state.value.url)) {
             _snackbar.value = "Url not valid"
@@ -31,32 +32,66 @@ class DownloaderViewModel : ViewModel() {
         }
 
         _state.update { it.copy(loading = true) }
+
         viewModelScope.launch {
-            when (val result = getVideoInfo(_state.value.url)) {
-                is VideoInfoResult.Success -> {
-                    if (_state.value.videos.any { it.url == result.url }) {
-                        _snackbar.value = "Video already in queue"
-                    } else {
-                        _state.update { s ->
-                            s.copy(
-                                videos = s.videos + Video(
-                                    id = s.videos.size + 1,
-                                    title = result.title,
-                                    thumbnail = result.thumbnail,
-                                    url = state.value.url,
-                                    format = result.format
-                                )
-                            )
-                        }
-                    }
-                    onUrlChange("")
+            when (val result = getUrlInfo(_state.value.url)) {
+                is UrlInfoResult.Playlist -> {
+                    LogStore.debug("addToQueue", result.toString())
+                    addPlaylistToQueue(result.videosInfo)
                 }
 
-                is VideoInfoResult.Error -> {
+                is UrlInfoResult.SingleVideo -> {
+                    addSingleVideoToQueue(result.videoInfo)
+                }
+
+                is UrlInfoResult.Error -> {
+                    LogStore.error("addToQueue", result.toString())
                     _state.update { it.copy(status = result.message) }
                 }
+
             }
             _state.update { it.copy(loading = false) }
+            onUrlChange("")
+        }
+    }
+
+    private fun addSingleVideoToQueue(videoInfo: VideoInfo) {
+        if (_state.value.videos.any { it.url == videoInfo.url }) {
+            LogStore.debug("addToQueue", "Video ${videoInfo.title} already in queue")
+            _snackbar.value = "Video already in queue"
+        } else {
+            _state.update { s ->
+                s.copy(
+                    videos = s.videos + Video(
+                        id = s.videos.size + 1,
+                        title = videoInfo.title,
+                        thumbnail = videoInfo.thumbnail,
+                        url = state.value.url,
+                        format = videoInfo.format
+                    )
+                )
+            }
+        }
+    }
+
+    private fun addPlaylistToQueue(videosInfo: List<VideoInfo>) {
+        videosInfo.forEach { videoInfo ->
+            if (_state.value.videos.any { it.url == videoInfo.url }) {
+                LogStore.debug("addToQueue", "Video ${videoInfo.title} already in queue")
+                _snackbar.value = "Video already in queue"
+            } else {
+                _state.update { s ->
+                    s.copy(
+                        videos = s.videos + Video(
+                            id = s.videos.size + 1,
+                            title = videoInfo.title,
+                            thumbnail = videoInfo.thumbnail,
+                            url = state.value.url,
+                            format = videoInfo.format
+                        )
+                    )
+                }
+            }
         }
     }
 

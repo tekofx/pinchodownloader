@@ -51,7 +51,7 @@ fun DownloaderScreen(
             UrlTextField(
                 url = state.url,
                 onUrlChange = viewModel::onUrlChange,
-                onSubmit = viewModel::addToQueue,
+                onSubmit = viewModel::onSubmitUrl,
             )
 
             AnimatedVisibility(visible = state.loading) {
