@@ -11,13 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LoadingCard() {
+fun LoadingCard(text: String) {
     Card {
         Row(
             modifier = Modifier.padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Adding video")
+            Text(text)
             LoadingIndicator()
         }
     }

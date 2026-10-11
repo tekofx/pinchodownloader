@@ -11,5 +11,6 @@ data class DownloaderState(
     val downloading: Boolean = false,
     val url: String = "",
     val urlIsValid: Boolean = true,
-    val showLogs: Boolean = false
+    val showLogs: Boolean = false,
+    val loaderMessage: String = ""
 )

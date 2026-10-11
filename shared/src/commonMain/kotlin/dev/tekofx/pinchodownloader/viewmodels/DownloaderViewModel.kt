@@ -34,8 +34,6 @@ class DownloaderViewModel : ViewModel() {
 
         _state.update { it.copy(loading = true) }
 
-
-
         viewModelScope.launch {
             if (_state.value.url.contains("&list=")) {
                 addPlaylistToQueue(_state.value.url)
@@ -75,10 +73,8 @@ class DownloaderViewModel : ViewModel() {
 
                     _state.update { it.copy(status = videoInfoResult.message) }
 
-
                 }
             }
-
 
         }
     }
@@ -87,13 +83,19 @@ class DownloaderViewModel : ViewModel() {
 
         when (val playlistInfoResult = getPlaylistInfo(url)) {
             is PlaylistInfoResult.Success -> {
+                _state.update { it.copy(loading = true, loaderMessage = "Adding playlist videos") }
 
                 val minimalVideoInfoList = playlistInfoResult.playlistInfo
 
-                minimalVideoInfoList.videos.forEach { minimalVideoInfo ->
+                minimalVideoInfoList.videos.forEachIndexed { index, minimalVideoInfo ->
                     addSingleVideoToQueue(minimalVideoInfo.url)
+                    _state.update {
+                        it.copy(
+                            loading = true,
+                            loaderMessage = "Added ${index + 1}/${minimalVideoInfoList.videos.size}"
+                        )
+                    }
                 }
-
             }
 
             is PlaylistInfoResult.Error -> {

@@ -55,7 +55,7 @@ fun DownloaderScreen(
             )
 
             AnimatedVisibility(visible = state.loading) {
-                LoadingCard()
+                LoadingCard(state.loaderMessage)
             }
 
 
