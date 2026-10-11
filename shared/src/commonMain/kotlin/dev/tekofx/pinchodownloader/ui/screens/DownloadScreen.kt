@@ -71,6 +71,7 @@ fun DownloaderScreen(
                     videos = state.videos,
                     latestDownloadVideoIndex = state.latestDownloadVideoIndex,
                     downloading = state.downloading,
+                    loading = state.loading,
                     progress = state.progress,
                     onDownloadAll = viewModel::downloadAll,
                     onClearAll = viewModel::clearAll,

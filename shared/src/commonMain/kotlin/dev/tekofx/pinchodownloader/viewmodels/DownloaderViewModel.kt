@@ -10,6 +10,7 @@ import dev.tekofx.pinchodownloader.entities.states.DownloaderState
 import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
 import dev.tekofx.pinchodownloader.log.LogStore
 import dev.tekofx.pinchodownloader.ytdlp.downloadYtDlp
+import dev.tekofx.pinchodownloader.ytdlp.getOEmbed
 import dev.tekofx.pinchodownloader.ytdlp.getPlaylistInfo
 import dev.tekofx.pinchodownloader.ytdlp.getVideoInfo
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,17 +33,17 @@ class DownloaderViewModel : ViewModel() {
             return
         }
 
-        _state.update { it.copy(loading = true) }
 
         viewModelScope.launch {
+            _state.update { it.copy(loading = true) }
             if (_state.value.url.contains("&list=")) {
                 addPlaylistToQueue(_state.value.url)
 
             } else {
                 addSingleVideoToQueue(_state.value.url)
             }
+            _state.update { it.copy(loading = false) }
         }
-        _state.update { it.copy(loading = false) }
 
     }
 
@@ -61,8 +62,25 @@ class DownloaderViewModel : ViewModel() {
                                 id = s.videos.size + 1,
                                 title = videoInfo.title,
                                 thumbnail = videoInfo.thumbnail,
-                                url = state.value.url,
+                                url = url,
                                 format = videoInfo.format
+                            )
+                        )
+                    }
+                }
+
+
+                is VideoInfoResult.AgeRestricted -> {
+                    val minimalVideoInfo = videoInfoResult.minimalVideoInfo
+                    _state.update { s ->
+                        s.copy(
+                            videos = s.videos + Video(
+                                id = s.videos.size + 1,
+                                title = minimalVideoInfo.title,
+                                thumbnail = minimalVideoInfo.thumbnail,
+                                url = state.value.url,
+                                format = "Age Restricted",
+                                status = TaskStatus.ERROR
                             )
                         )
                     }
@@ -70,6 +88,8 @@ class DownloaderViewModel : ViewModel() {
 
                 is VideoInfoResult.Error -> {
                     LogStore.error("addSingleVideoToQueue", videoInfoResult.toString())
+                    val test = getOEmbed(url)
+                    LogStore.error("addSingleVideoToQueue", test.toString())
 
                     _state.update { it.copy(status = videoInfoResult.message) }
 
@@ -118,28 +138,38 @@ class DownloaderViewModel : ViewModel() {
     fun downloadAll() {
         viewModelScope.launch {
             _state.update { it.copy(progress = 0f, downloading = true, latestDownloadVideoIndex = 0) }
-            val videos = _state.value.videos
 
-            for (i in videos.indices) {
-                updateVideo(i) { it.copy(status = TaskStatus.IN_PROGRESS) }
+            val snapshotVideos = _state.value.videos
+
+            snapshotVideos.forEachIndexed { index, video ->
+                if (video.status == TaskStatus.ERROR) return@forEachIndexed
+
+
+                val videoId = video.id
+
+                updateVideo(videoId) { it.copy(status = TaskStatus.IN_PROGRESS) }
+
                 try {
-                    downloadYtDlp(videos[i].url, getDownloadsDir()) { p ->
-                        updateVideo(i) { it.copy(progress = p.toFloat()) }
+                    downloadYtDlp(video.url, getDownloadsDir()) { p ->
+                        updateVideo(videoId) { it.copy(progress = p.toFloat()) }
                         _state.update { s ->
-                            s.copy(progress = ((i + p) / s.videos.size).toFloat())
+                            s.copy(progress = ((index + p) / snapshotVideos.size).toFloat())
                         }
                     }
                 } catch (e: RuntimeException) {
                     LogStore.error("YT-Dlp Download", e.message ?: "Unknown")
-                    updateVideo(i) { it.copy(status = TaskStatus.ERROR) }
-                    continue
+                    updateVideo(videoId) { it.copy(status = TaskStatus.ERROR) }
+                    return@forEachIndexed
                 }
-                updateVideo(i) { it.copy(status = TaskStatus.COMPLETED) }
-                _state.update { s -> s.copy(latestDownloadVideoIndex = i + 1) }
+
+                updateVideo(videoId) { it.copy(status = TaskStatus.COMPLETED) }
+                _state.update { s -> s.copy(latestDownloadVideoIndex = index + 1) }
             }
+
             _state.update { it.copy(progress = 1f, status = "Done", downloading = false) }
         }
     }
+
 
     fun onUrlChange(url: String) {
         _state.update { it.copy(url = url) }
@@ -161,11 +191,16 @@ class DownloaderViewModel : ViewModel() {
         _state.update { s -> s.copy(videos = s.videos.filter { it.id != id }) }
     }
 
-    private fun updateVideo(index: Int, transform: (Video) -> Video) {
-        _state.update { s ->
-            s.copy(videos = s.videos.toMutableList().also { it[index] = transform(it[index]) })
+    fun updateVideo(videoId: Int, transform: (Video) -> Video) {
+        _state.update { currentState ->
+            currentState.copy(
+                videos = currentState.videos.map { video ->
+                    if (video.id == videoId) transform(video) else video
+                }
+            )
         }
     }
+
 
     fun dismissSnackbar() {
         _snackbar.value = null

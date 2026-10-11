@@ -41,6 +41,34 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
     }
 }
 
+fun extractVideoId(url: String): String? {
+    // /watch?v=VIDEO_ID
+    url.takeIf { it.contains("/watch?v=") }?.let {
+        return it.substringAfter("v=").substringBefore("&")
+    }
+
+    // /shorts/VIDEO_ID
+    url.takeIf { it.contains("/shorts/") }?.let {
+        return it.substringAfter("/shorts/").substringBefore("?").substringBefore("/")
+    }
+
+    // /embed/VIDEO_ID
+    url.takeIf { it.contains("/embed/") }?.let {
+        return it.substringAfter("/embed/").substringBefore("?").substringBefore("/")
+    }
+
+    // /live/VIDEO_ID
+    url.takeIf { it.contains("/live/") }?.let {
+        return it.substringAfter("/live/").substringBefore("?").substringBefore("/")
+    }
+
+    // youtu.be/VIDEO_ID
+    url.takeIf { it.contains("youtu.be/") }?.let {
+        return it.substringAfter("youtu.be/").substringBefore("?").substringBefore("/")
+    }
+
+    return null
+}
 
 actual suspend fun getVideoInfo(url: String): VideoInfoResult {
     return withContext(Dispatchers.IO) {
@@ -53,10 +81,16 @@ actual suspend fun getVideoInfo(url: String): VideoInfoResult {
 
             if (exitCode != 0) {
                 val stderr = process.errorStream.bufferedReader().readText()
-                return@withContext if (stderr.contains("Sign in to confirm your age"))
-                    VideoInfoResult.Error("Video has age restriction")
-                else
-                    VideoInfoResult.Error("yt-dlp failed: ${stderr.take(200)}")
+
+                if (stderr.contains("Sign in to confirm your age")) {
+                    val minimalVideoInfo = getOEmbed(url)
+                    if (minimalVideoInfo != null) {
+                        return@withContext VideoInfoResult.AgeRestricted(minimalVideoInfo)
+                    }
+
+                }
+                return@withContext VideoInfoResult.Error("yt-dlp failed: ${stderr.take(200)}")
+
             }
 
             val root = Json.parseToJsonElement(json) as? JsonObject
@@ -75,6 +109,21 @@ actual suspend fun getVideoInfo(url: String): VideoInfoResult {
             VideoInfoResult.Error(e.message ?: "Unknown error")
         }
 
+    }
+}
+
+actual suspend fun getOEmbed(url: String): MinimalVideoInfo? {
+    val videoId = extractVideoId(url)
+    return withContext(Dispatchers.IO) {
+        val url = "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=$videoId&format=json"
+        val json = java.net.URL(url).readText()
+        val obj = Json.parseToJsonElement(json) as? JsonObject ?: return@withContext null
+
+        MinimalVideoInfo(
+            title = obj.getString("title") ?: "",
+            thumbnail = obj.getString("thumbnail_url") ?: "",
+            url = "https://www.youtube.com/watch?v=$videoId",
+        )
     }
 }
 
@@ -102,7 +151,8 @@ actual suspend fun getPlaylistInfo(url: String): PlaylistInfoResult {
                 ?: return@withContext PlaylistInfoResult.Error("No title in response")
             val videoUrl = json["webpage_url"]?.jsonPrimitive?.content
                 ?: "https://www.youtube.com/watch?v=${json["id"]?.jsonPrimitive?.content}"
-            videos.addLast(MinimalVideoInfo(title, videoUrl))
+            val thumbnail = getThumbnail(json) ?: ""
+            videos.addLast(MinimalVideoInfo(title, videoUrl, thumbnail))
         }
 
         return@withContext PlaylistInfoResult.Success(PlaylistInfo(url, videos))
@@ -110,6 +160,15 @@ actual suspend fun getPlaylistInfo(url: String): PlaylistInfoResult {
     }
 }
 
+fun getThumbnail(entry: JsonObject): String? {
+    entry.getString("thumbnail")?.let { return it }  // null here (flat playlist)
+
+    val arr = entry["thumbnails"] as? JsonArray ?: return null
+    return arr
+        .filterIsInstance<JsonObject>()
+        .maxByOrNull { (it["width"] as? JsonPrimitive)?.intOrNull ?: 0 }
+        ?.getString("url")
+}
 
 @OptIn(ExperimentalSerializationApi::class)
 actual suspend fun getUrlInfo(url: String): UrlInfoResult {

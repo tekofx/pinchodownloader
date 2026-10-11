@@ -24,6 +24,7 @@ import dev.tekofx.pinchodownloader.ui.components.video.VideosList
 fun Queue(
     videos: List<Video>,
     downloading: Boolean,
+    loading: Boolean,
     latestDownloadVideoIndex: Int,
     progress: Float,
     onDownloadAll: () -> Unit,
@@ -68,7 +69,7 @@ fun Queue(
         ) {
             TextIconButton(
                 onClick = onDownloadAll, icon = Icons.Filled.Download, text = "Download All",
-                enabled = !downloading
+                enabled = !downloading && !loading
 
             )
             Row(
