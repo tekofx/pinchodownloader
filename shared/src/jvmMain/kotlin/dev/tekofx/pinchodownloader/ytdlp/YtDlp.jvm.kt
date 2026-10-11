@@ -1,7 +1,6 @@
 package dev.tekofx.pinchodownloader.ytdlp
 
-import dev.tekofx.pinchodownloader.entities.UrlInfoResult
-import dev.tekofx.pinchodownloader.entities.VideoInfo
+import dev.tekofx.pinchodownloader.entities.*
 import dev.tekofx.pinchodownloader.log.LogStatus
 import dev.tekofx.pinchodownloader.log.LogStore
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +42,75 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
 }
 
 
+actual suspend fun getVideoInfo(url: String): VideoInfoResult {
+    return withContext(Dispatchers.IO) {
+
+        try {
+            val process = ProcessBuilder("yt-dlp", "-J", url)
+                .redirectErrorStream(false).start()
+            val json = process.inputStream.bufferedReader().readText()
+            val exitCode = process.waitFor()
+
+            if (exitCode != 0) {
+                val stderr = process.errorStream.bufferedReader().readText()
+                return@withContext if (stderr.contains("Sign in to confirm your age"))
+                    VideoInfoResult.Error("Video has age restriction")
+                else
+                    VideoInfoResult.Error("yt-dlp failed: ${stderr.take(200)}")
+            }
+
+            val root = Json.parseToJsonElement(json) as? JsonObject
+                ?: return@withContext VideoInfoResult.Error("Invalid response from yt-dlp (got null or non-object)")
+
+            val title = root.getString("title")
+                ?: return@withContext VideoInfoResult.Error("No title in response")
+            val formatNote = root.getString("format_note")?.substringBefore("+")
+                ?: return@withContext VideoInfoResult.Error("No format note in response")
+            val thumbnail = root.getString("thumbnail")
+                ?: return@withContext VideoInfoResult.Error("No thumbnail in response")
+
+            VideoInfoResult.Success(VideoInfo(title, thumbnail, url, formatNote))
+        } catch (e: Exception) {
+            LogStore.error("getVideoInfo", e.message.toString())
+            VideoInfoResult.Error(e.message ?: "Unknown error")
+        }
+
+    }
+}
+
+fun JsonObject.getString(key: String): String? =
+    (this[key] as? JsonPrimitive)?.contentOrNull
+
+actual suspend fun getPlaylistInfo(url: String): PlaylistInfoResult {
+    return withContext(Dispatchers.IO) {
+
+        val process = ProcessBuilder("yt-dlp", "--flat-playlist", "-J", url)
+            .redirectErrorStream(false).start()
+        val json = process.inputStream.bufferedReader().readText()
+        process.waitFor()
+
+        val root = Json.parseToJsonElement(json).jsonObject
+
+        val entries = root["entries"]?.jsonArray
+
+
+        val videos: MutableList<MinimalVideoInfo> = mutableListOf()
+
+        entries?.forEach { entry ->
+            val json = entry.jsonObject
+            val title = json["title"]?.jsonPrimitive?.content
+                ?: return@withContext PlaylistInfoResult.Error("No title in response")
+            val videoUrl = json["webpage_url"]?.jsonPrimitive?.content
+                ?: "https://www.youtube.com/watch?v=${json["id"]?.jsonPrimitive?.content}"
+            videos.addLast(MinimalVideoInfo(title, videoUrl))
+        }
+
+        return@withContext PlaylistInfoResult.Success(PlaylistInfo(url, videos))
+
+    }
+}
+
+
 @OptIn(ExperimentalSerializationApi::class)
 actual suspend fun getUrlInfo(url: String): UrlInfoResult {
     return withContext(Dispatchers.IO) {
@@ -52,14 +120,12 @@ actual suspend fun getUrlInfo(url: String): UrlInfoResult {
 
             for (entry in entries) {
                 LogStore.debug("getUrlInfo", "entry: $entry")
-                val title = entry["title"]?.jsonPrimitive?.content
+                val title = entry.getString("title")
                     ?: return@withContext UrlInfoResult.Error("No title in response")
-                val thumbnail = getThumbnail(entry)
+                val thumbnail = entry.getString("thumbnail")
                     ?: return@withContext UrlInfoResult.Error("No thumbnail in response")
-
                 val formatNote = entry["format_note"]?.jsonPrimitive?.content?.substringBefore("+")
                     ?: return@withContext UrlInfoResult.Error("No format note in response")
-
                 val videoUrl = entry["webpage_url"]?.jsonPrimitive?.content
                     ?: "https://www.youtube.com/watch?v=${entry["id"]?.jsonPrimitive?.content}"
 
@@ -101,14 +167,3 @@ fun getEntries(url: String): List<JsonObject> {
         ?: listOf(root)
 }
 
-fun getThumbnail(entry: JsonObject): String? {
-    // 1. Direct string (resolved)
-    entry["thumbnail"]?.jsonPrimitive?.content?.let { return it }
-
-    // 2. Array of thumbnail objects — pick the largest
-    val arr = entry["thumbnails"] as? JsonArray ?: return null
-    return arr
-        .filterIsInstance<JsonObject>()
-        .maxByOrNull { (it["width"]?.jsonPrimitive?.int ?: 0) }
-        ?.get("url")?.jsonPrimitive?.content
-}

@@ -2,15 +2,16 @@ package dev.tekofx.pinchodownloader.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.tekofx.pinchodownloader.entities.PlaylistInfoResult
 import dev.tekofx.pinchodownloader.entities.TaskStatus
-import dev.tekofx.pinchodownloader.entities.UrlInfoResult
 import dev.tekofx.pinchodownloader.entities.Video
-import dev.tekofx.pinchodownloader.entities.VideoInfo
+import dev.tekofx.pinchodownloader.entities.VideoInfoResult
 import dev.tekofx.pinchodownloader.entities.states.DownloaderState
 import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
 import dev.tekofx.pinchodownloader.log.LogStore
 import dev.tekofx.pinchodownloader.ytdlp.downloadYtDlp
-import dev.tekofx.pinchodownloader.ytdlp.getUrlInfo
+import dev.tekofx.pinchodownloader.ytdlp.getPlaylistInfo
+import dev.tekofx.pinchodownloader.ytdlp.getVideoInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -33,66 +34,74 @@ class DownloaderViewModel : ViewModel() {
 
         _state.update { it.copy(loading = true) }
 
+
+
         viewModelScope.launch {
-            when (val result = getUrlInfo(_state.value.url)) {
-                is UrlInfoResult.Playlist -> {
-                    LogStore.debug("addToQueue", result.toString())
-                    addPlaylistToQueue(result.videosInfo)
-                }
+            if (_state.value.url.contains("&list=")) {
+                addPlaylistToQueue(_state.value.url)
 
-                is UrlInfoResult.SingleVideo -> {
-                    addSingleVideoToQueue(result.videoInfo)
-                }
-
-                is UrlInfoResult.Error -> {
-                    LogStore.error("addToQueue", result.toString())
-                    _state.update { it.copy(status = result.message) }
-                }
-
+            } else {
+                addSingleVideoToQueue(_state.value.url)
             }
-            _state.update { it.copy(loading = false) }
-            onUrlChange("")
         }
+        _state.update { it.copy(loading = false) }
+
     }
 
-    private fun addSingleVideoToQueue(videoInfo: VideoInfo) {
-        if (_state.value.videos.any { it.url == videoInfo.url }) {
-            LogStore.debug("addToQueue", "Video ${videoInfo.title} already in queue")
+
+    private suspend fun addSingleVideoToQueue(url: String) {
+        if (_state.value.videos.any { it.url == url }) {
+            LogStore.debug("addToQueue", "Video already in queue")
             _snackbar.value = "Video already in queue"
         } else {
-            _state.update { s ->
-                s.copy(
-                    videos = s.videos + Video(
-                        id = s.videos.size + 1,
-                        title = videoInfo.title,
-                        thumbnail = videoInfo.thumbnail,
-                        url = state.value.url,
-                        format = videoInfo.format
-                    )
-                )
+            when (val videoInfoResult = getVideoInfo(url)) {
+                is VideoInfoResult.Success -> {
+                    val videoInfo = videoInfoResult.videoInfo
+                    _state.update { s ->
+                        s.copy(
+                            videos = s.videos + Video(
+                                id = s.videos.size + 1,
+                                title = videoInfo.title,
+                                thumbnail = videoInfo.thumbnail,
+                                url = state.value.url,
+                                format = videoInfo.format
+                            )
+                        )
+                    }
+                }
+
+                is VideoInfoResult.Error -> {
+                    LogStore.error("addSingleVideoToQueue", videoInfoResult.toString())
+
+                    _state.update { it.copy(status = videoInfoResult.message) }
+
+
+                }
             }
+
+
         }
     }
 
-    private fun addPlaylistToQueue(videosInfo: List<VideoInfo>) {
-        videosInfo.forEach { videoInfo ->
-            if (_state.value.videos.any { it.url == videoInfo.url }) {
-                LogStore.debug("addToQueue", "Video ${videoInfo.title} already in queue")
-                _snackbar.value = "Video already in queue"
-            } else {
-                _state.update { s ->
-                    s.copy(
-                        videos = s.videos + Video(
-                            id = s.videos.size + 1,
-                            title = videoInfo.title,
-                            thumbnail = videoInfo.thumbnail,
-                            url = state.value.url,
-                            format = videoInfo.format
-                        )
-                    )
+    private suspend fun addPlaylistToQueue(url: String) {
+
+        when (val playlistInfoResult = getPlaylistInfo(url)) {
+            is PlaylistInfoResult.Success -> {
+
+                val minimalVideoInfoList = playlistInfoResult.playlistInfo
+
+                minimalVideoInfoList.videos.forEach { minimalVideoInfo ->
+                    addSingleVideoToQueue(minimalVideoInfo.url)
                 }
+
+            }
+
+            is PlaylistInfoResult.Error -> {
+                LogStore.error("addPlaylistToQueue", playlistInfoResult.toString())
+                _state.update { it.copy(status = playlistInfoResult.message) }
             }
         }
+
     }
 
 
