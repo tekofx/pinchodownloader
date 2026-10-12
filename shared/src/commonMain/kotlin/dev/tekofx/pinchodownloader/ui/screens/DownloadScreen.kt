@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tekofx.pinchodownloader.ui.components.AppTitle
 import dev.tekofx.pinchodownloader.ui.components.LoadingCard
 import dev.tekofx.pinchodownloader.ui.components.LogView
+import dev.tekofx.pinchodownloader.ui.components.PlaylistAddPopup
 import dev.tekofx.pinchodownloader.ui.components.input.UrlTextField
 import dev.tekofx.pinchodownloader.ui.components.queue.EmptyQueue
 import dev.tekofx.pinchodownloader.ui.components.queue.Queue
@@ -46,6 +47,14 @@ fun DownloaderScreen(
         ) {
             AnimatedVisibility(visible = state.showLogs) {
                 LogView(onCloseClick = viewModel::toggleLogs)
+            }
+
+            AnimatedVisibility(visible = state.showPlaylistPopup) {
+                PlaylistAddPopup(
+                    text = state.playlistPopupText,
+                    onDismiss = viewModel::togglePopupDialog,
+                    onConfirm = viewModel::confirmAddPlaylistToQueue
+                )
             }
 
             UrlTextField(

@@ -3,7 +3,6 @@ package dev.tekofx.pinchodownloader.ytdlp
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoFormat
-import dev.tekofx.pinchodownloader.log.LogStore
 
 
 fun YtDlpFormat.toFormat(): VideoFormat {
@@ -52,10 +51,6 @@ fun YtDlpVideo.toVideo(): Video {
     val orderedThumbnailUrls = this.thumbnails
         .sortedByDescending { it.preference }
         .map { it.url }
-
-
-
-    LogStore.debug("test", "Ordered thumbnail urls: $orderedThumbnailUrls")
 
     return Video(
         id = id,

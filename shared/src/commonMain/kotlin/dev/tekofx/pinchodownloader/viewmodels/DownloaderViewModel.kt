@@ -32,7 +32,6 @@ class DownloaderViewModel : ViewModel() {
             _state.update { it.copy(loading = true) }
             if (_state.value.url.contains("&list=")) {
                 addPlaylistToQueue(_state.value.url)
-
             } else {
                 addSingleVideoToQueue(_state.value.url)
             }
@@ -40,7 +39,6 @@ class DownloaderViewModel : ViewModel() {
         }
 
     }
-
 
     private suspend fun addSingleVideoToQueue(url: String) {
         if (_state.value.videos.any { it.url == url }) {
@@ -74,22 +72,40 @@ class DownloaderViewModel : ViewModel() {
         }
     }
 
+    fun confirmAddPlaylistToQueue() {
+
+        val tempPlaylist = _state.value.tempPlaylist ?: return
+
+        viewModelScope.launch {
+            tempPlaylist.videos.forEachIndexed { index, minimalVideoInfo ->
+                addSingleVideoToQueue(minimalVideoInfo.url)
+                _state.update {
+                    it.copy(
+                        loading = true,
+                        loaderMessage = "Added ${index + 1}/${tempPlaylist.videos.size}"
+                    )
+                }
+            }
+            _state.update {
+                it.copy(
+                    loading = false,
+                )
+            }
+        }
+    }
+
     private suspend fun addPlaylistToQueue(url: String) {
 
         when (val playlistInfoResult = fetchPlaylist(url)) {
             is YtDlpPlaylistResult.Success -> {
-
-                val ytDlpPlaylist = playlistInfoResult.ytDlpPlaylist
-
-                ytDlpPlaylist.videos.forEachIndexed { index, minimalVideoInfo ->
-                    addSingleVideoToQueue(minimalVideoInfo.url)
-                    _state.update {
-                        it.copy(
-                            loading = true,
-                            loaderMessage = "Added ${index + 1}/${ytDlpPlaylist.videos.size}"
-                        )
-                    }
+                _state.update {
+                    it.copy(
+                        showPlaylistPopup = true,
+                        playlistPopupText = "Are you sure you want to add ${playlistInfoResult.ytDlpPlaylist.videos.size} videos to queue?",
+                        tempPlaylist = playlistInfoResult.ytDlpPlaylist
+                    )
                 }
+
             }
 
             is YtDlpPlaylistResult.Error -> {
@@ -144,6 +160,10 @@ class DownloaderViewModel : ViewModel() {
         }
     }
 
+
+    fun togglePopupDialog() {
+        _state.update { it.copy(showPlaylistPopup = !it.showPlaylistPopup) }
+    }
 
     fun onUrlChange(url: String) {
         _state.update { it.copy(url = url) }
