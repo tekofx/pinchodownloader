@@ -7,7 +7,7 @@
 
 ### Improved
 
-- Global downloading now shows how many videos have been downloaded and the total
+- Global download bar now shows how many videos have been downloaded and the total
 
 ## 1.2.0 - 2026/09/12
 
