@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.tekofx.pinchodownloader.entities.Video
+import dev.tekofx.pinchodownloader.ytdlp.YtDlpFormat
 
 data class ColumnLayout(
     val id: Float = 0.02f,
@@ -31,6 +32,7 @@ val columnSpacing = 15.dp
 fun VideosList(
     videos: List<Video>,
     onDeleteVideo: (String) -> Unit,
+    onFormatSelection: (String, YtDlpFormat?) -> Unit
 ) {
 
 
@@ -83,6 +85,7 @@ fun VideosList(
                 video = video,
                 modifier = Modifier.animateItem(),
                 onDelete = { onDeleteVideo(video.id) },
+                onFormatSelection = { onFormatSelection(video.id, it) }
             )
         }
     }

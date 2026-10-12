@@ -31,6 +31,7 @@ fun VideoCard(
     video: Video,
     modifier: Modifier,
     onDelete: () -> Unit,
+    onFormatSelection: (YtDlpFormat?) -> Unit,
 ) {
 
     val animatedProgress by animateFloatAsState(
@@ -69,7 +70,7 @@ fun VideoCard(
                     FormatComboBox(
                         formats = video.ytDlpFormats,
                         selectedFormat = video.selectedFormat,
-                        onFormatSelected = {}
+                        onFormatSelected = onFormatSelection
                     )
                 }
             }
@@ -136,7 +137,7 @@ fun FormatComboBox(
     modifier: Modifier = Modifier,
     formats: List<YtDlpFormat>,
     selectedFormat: YtDlpFormat?, // 💡 Recibe el formato actual directamente del objeto 'Video'
-    onFormatSelected: (YtDlpFormat) -> Unit // Callback para notificar cambios al ViewModel
+    onFormatSelected: (YtDlpFormat?) -> Unit // Callback para notificar cambios al ViewModel
 ) {
     // Solo manejamos de forma interna si el menú está desplegado o no
     var expanded by remember { mutableStateOf(false) }

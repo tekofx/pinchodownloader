@@ -78,6 +78,11 @@ fun DownloaderScreen(
                     onClearAll = viewModel::clearAll,
                     onClearCompleted = viewModel::clearCompleted,
                     onDeleteVideo = { viewModel.deleteVideo(it) },
+                    onFormatSelection = { id, format ->
+                        viewModel.updateVideo(id) { currentVideo ->
+                            currentVideo.copy(selectedFormat = format)
+                        }
+                    }
                 ) else EmptyQueue()
             }
 

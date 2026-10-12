@@ -18,6 +18,7 @@ import dev.tekofx.pinchodownloader.entities.ButtonVariant
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.ui.components.input.TextIconButton
 import dev.tekofx.pinchodownloader.ui.components.video.VideosList
+import dev.tekofx.pinchodownloader.ytdlp.YtDlpFormat
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -31,6 +32,7 @@ fun Queue(
     onClearAll: () -> Unit,
     onClearCompleted: () -> Unit,
     onDeleteVideo: (String) -> Unit,
+    onFormatSelection: (id: String, format: YtDlpFormat?) -> Unit,
 ) {
 
 
@@ -146,7 +148,8 @@ fun Queue(
         }
         VideosList(
             videos = videos,
-            onDeleteVideo = onDeleteVideo
+            onDeleteVideo = onDeleteVideo,
+            onFormatSelection = onFormatSelection
         )
     }
 

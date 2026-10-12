@@ -3,6 +3,7 @@
 ### Added
 
 - Playlist download. Paste a playlist link and all videos will be added to queue
+- Format selection. Now the user can select which format to download each video in queue
 
 ### Improved
 

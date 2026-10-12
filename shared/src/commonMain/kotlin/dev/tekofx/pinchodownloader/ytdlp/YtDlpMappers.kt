@@ -2,7 +2,6 @@ package dev.tekofx.pinchodownloader.ytdlp
 
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
-import dev.tekofx.pinchodownloader.log.LogStore
 
 fun YtDlpVideo.toVideo(): Video {
     // Filter formats with height and formatNote
@@ -13,9 +12,6 @@ fun YtDlpVideo.toVideo(): Video {
     // If not exists get the bigger format
         ?: videoFormats.sortedByDescending { it.height }.firstOrNull()
         ?: this.ytDlpFormats.lastOrNull()
-
-    LogStore.debug("YTDlpVideo.toVideo", "YTDLP video format: $defaultFormat")
-
 
     return Video(
         id = id,

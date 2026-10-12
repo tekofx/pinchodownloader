@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.states.DownloaderState
-import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
 import dev.tekofx.pinchodownloader.log.LogStore
 import dev.tekofx.pinchodownloader.ytdlp.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -126,7 +125,7 @@ class DownloaderViewModel : ViewModel() {
                 updateVideo(videoId) { it.copy(status = TaskStatus.IN_PROGRESS) }
 
                 try {
-                    downloadYtDlp(video.url, getDownloadsDir()) { p ->
+                    downloadYtDlp(video.url, video.selectedFormat) { p ->
                         updateVideo(videoId) { it.copy(progress = p.toFloat()) }
                         _state.update { s ->
                             s.copy(progress = ((index + p) / snapshotVideos.size).toFloat())

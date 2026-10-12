@@ -1,6 +1,7 @@
 package dev.tekofx.pinchodownloader.ytdlp
 
 import dev.tekofx.pinchodownloader.entities.Video
+import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
 import dev.tekofx.pinchodownloader.log.LogStatus
 import dev.tekofx.pinchodownloader.log.LogStore
 import kotlinx.coroutines.Dispatchers
@@ -9,16 +10,41 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.*
 
-actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Double) -> Unit) {
+actual suspend fun downloadYtDlp(url: String, format: YtDlpFormat?, onProgress: (Double) -> Unit) {
     withContext(Dispatchers.IO) {
+
+        LogStore.debug("YtDlpRepository.downloadYtDLP", format?.formatNote ?: "null")
+// 1. Construimos la lista de comandos dinámicamente
+        val ytDlpCommand = buildList {
+            add("yt-dlp")
+
+            add("-f")
+            if (format == null) {
+                // 💡 Si el formato es null, descarga la mejor combinación de Video + Audio disponible
+                add("bestvideo+bestaudio/best")
+            } else {
+                // 💡 Si el formato existe, baja el seleccionado y aseguras audio añadiendo "+bestaudio/best"
+                add("${format.formatId}+bestaudio/best")
+            }
+
+            add("-o")
+            add("${getDownloadsDir()}/%(title)s.%(ext)s")
+
+            add("--newline")
+            add("--progress-template")
+            add("download:%(progress._percent_str)s")
+
+            add("--extractor-args")
+            add("youtube:player-client=web_embedded,web,tv")
+
+            add("--remote-components")
+            add("ejs:github")
+
+            add(url) // Agregamos la URL al final
+        }
+
         val proc = ProcessBuilder(
-            "yt-dlp", "-t", "mp4",
-            "-o", "$outDir/%(title)s.%(ext)s",
-            "--newline",
-            "--progress-template", "download:%(progress._percent_str)s",
-            "--extractor-args", "youtube:player-client=web_embedded,web,tv",
-            "--remote-components", "ejs:github",
-            url
+            ytDlpCommand
         ).redirectErrorStream(true).start()
 
         proc.inputStream.bufferedReader().forEachLine { line ->

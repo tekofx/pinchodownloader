@@ -2,7 +2,7 @@ package dev.tekofx.pinchodownloader.ytdlp
 
 import dev.tekofx.pinchodownloader.entities.Video
 
-expect suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Double) -> Unit)
+expect suspend fun downloadYtDlp(url: String, format: YtDlpFormat?, onProgress: (Double) -> Unit)
 
 
 expect suspend fun fetchVideo(url: String): YtDlpVideoResult
