@@ -1,8 +1,13 @@
-## Unreleased
+## 1.3.0 - 2026/10/12
+
+### Added
+
+- Playlist download. Paste a playlist link and all videos will be added to queue
+- Format selection. Now the user can select which format to download each video in queue
 
 ### Improved
 
-- Global downloading now shows how many videos have been downloaded and the total
+- Global download bar now shows how many videos have been downloaded and the total
 
 ## 1.2.0 - 2026/09/12
 

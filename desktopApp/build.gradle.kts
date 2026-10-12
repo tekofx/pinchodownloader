@@ -28,10 +28,10 @@ compose.desktop {
         }
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe, TargetFormat.Rpm)
+            targetFormats(TargetFormat.Msi, TargetFormat.Exe, TargetFormat.AppImage)
 
             packageName = "Pincho Downloader"
-            packageVersion = "1.2.0"
+            packageVersion = "1.3.0"
 
             windows {
                 menu = true

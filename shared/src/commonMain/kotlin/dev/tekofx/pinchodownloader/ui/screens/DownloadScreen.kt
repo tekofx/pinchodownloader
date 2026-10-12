@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tekofx.pinchodownloader.ui.components.AppTitle
 import dev.tekofx.pinchodownloader.ui.components.LoadingCard
 import dev.tekofx.pinchodownloader.ui.components.LogView
+import dev.tekofx.pinchodownloader.ui.components.PlaylistAddPopup
 import dev.tekofx.pinchodownloader.ui.components.input.UrlTextField
 import dev.tekofx.pinchodownloader.ui.components.queue.EmptyQueue
 import dev.tekofx.pinchodownloader.ui.components.queue.Queue
@@ -48,14 +49,23 @@ fun DownloaderScreen(
                 LogView(onCloseClick = viewModel::toggleLogs)
             }
 
+            AnimatedVisibility(visible = state.showPlaylistPopup) {
+                PlaylistAddPopup(
+                    text = state.playlistPopupText,
+                    onDismiss = viewModel::togglePopupDialog,
+                    onConfirm = viewModel::confirmAddPlaylistToQueue
+                )
+            }
+
             UrlTextField(
                 url = state.url,
+                enabled = !state.loading,
                 onUrlChange = viewModel::onUrlChange,
-                onSubmit = viewModel::addToQueue,
+                onSubmit = viewModel::onSubmitUrl,
             )
 
             AnimatedVisibility(visible = state.loading) {
-                LoadingCard()
+                LoadingCard(state.loaderMessage)
             }
 
 
@@ -71,11 +81,17 @@ fun DownloaderScreen(
                     videos = state.videos,
                     latestDownloadVideoIndex = state.latestDownloadVideoIndex,
                     downloading = state.downloading,
+                    loading = state.loading,
                     progress = state.progress,
                     onDownloadAll = viewModel::downloadAll,
                     onClearAll = viewModel::clearAll,
                     onClearCompleted = viewModel::clearCompleted,
                     onDeleteVideo = { viewModel.deleteVideo(it) },
+                    onFormatSelection = { id, format ->
+                        viewModel.updateVideo(id) { currentVideo ->
+                            currentVideo.copy(selectedFormat = format)
+                        }
+                    }
                 ) else EmptyQueue()
             }
 

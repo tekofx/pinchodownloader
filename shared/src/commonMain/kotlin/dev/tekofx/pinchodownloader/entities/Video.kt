@@ -1,14 +1,15 @@
 package dev.tekofx.pinchodownloader.entities
 
 data class Video(
-    val id: Int,
+    val id: String,
     val title: String,
-    val thumbnail: String,
+    val thumbnails: List<String>,
     val url: String,
-    val format: String,
-
+    val formats: List<VideoFormat>,
+    val selectedFormat: VideoFormat?,
 
     var status: TaskStatus = TaskStatus.PENDING,
     var progress: Float = 0f
 )
+
 

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.tekofx.pinchodownloader.entities.ButtonVariant
 import dev.tekofx.pinchodownloader.entities.Video
+import dev.tekofx.pinchodownloader.entities.VideoFormat
 import dev.tekofx.pinchodownloader.ui.components.input.TextIconButton
 import dev.tekofx.pinchodownloader.ui.components.video.VideosList
 
@@ -24,12 +25,14 @@ import dev.tekofx.pinchodownloader.ui.components.video.VideosList
 fun Queue(
     videos: List<Video>,
     downloading: Boolean,
+    loading: Boolean,
     latestDownloadVideoIndex: Int,
     progress: Float,
     onDownloadAll: () -> Unit,
     onClearAll: () -> Unit,
     onClearCompleted: () -> Unit,
-    onDeleteVideo: (Int) -> Unit,
+    onDeleteVideo: (String) -> Unit,
+    onFormatSelection: (id: String, format: VideoFormat?) -> Unit,
 ) {
 
 
@@ -68,7 +71,7 @@ fun Queue(
         ) {
             TextIconButton(
                 onClick = onDownloadAll, icon = Icons.Filled.Download, text = "Download All",
-                enabled = !downloading
+                enabled = !downloading && !loading
 
             )
             Row(
@@ -78,6 +81,7 @@ fun Queue(
                     onClick = onClearAll,
                     icon = Icons.Filled.DeleteSweep,
                     text = "Clear All",
+                    enabled = !downloading && !loading,
                     variant = ButtonVariant.Outlined,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
@@ -89,6 +93,7 @@ fun Queue(
                     icon = Icons.Filled.DownloadDone,
                     text = "Clear Completed",
                     variant = ButtonVariant.Outlined,
+                    enabled = !downloading && !loading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.tertiary,
                         contentColor = MaterialTheme.colorScheme.onTertiary
@@ -97,7 +102,7 @@ fun Queue(
             }
         }
 
-        AnimatedVisibility(true) {
+        AnimatedVisibility(downloading) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -113,8 +118,6 @@ fun Queue(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-
-
                         AnimatedContent(
                             targetState = "$latestDownloadVideoIndex",
                             transitionSpec = {
@@ -145,7 +148,8 @@ fun Queue(
         }
         VideosList(
             videos = videos,
-            onDeleteVideo = onDeleteVideo
+            onDeleteVideo = onDeleteVideo,
+            onFormatSelection = onFormatSelection
         )
     }
 

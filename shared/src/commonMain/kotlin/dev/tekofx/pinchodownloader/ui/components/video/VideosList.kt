@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -15,13 +15,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.tekofx.pinchodownloader.entities.Video
+import dev.tekofx.pinchodownloader.entities.VideoFormat
 
 data class ColumnLayout(
-    val id: Float = 0.02f,
+    val id: Float = 0.04f,
     val thumbnail: Float = 0.1f,
     val title: Float = 0.25f,
     val format: Float = 0.15f,
-    val status: Float = 0.1f,
+    val status: Float = 0.12f,
+    val action: Float = 0.07f,
 )
 
 val layout = ColumnLayout()
@@ -30,7 +32,8 @@ val columnSpacing = 15.dp
 @Composable
 fun VideosList(
     videos: List<Video>,
-    onDeleteVideo: (Int) -> Unit,
+    onDeleteVideo: (String) -> Unit,
+    onFormatSelection: (String, VideoFormat?) -> Unit
 ) {
 
 
@@ -52,7 +55,7 @@ fun VideosList(
                     horizontalArrangement = Arrangement.spacedBy(columnSpacing)
                 ) {
                     Text(
-                        text = "Id",
+                        text = "#",
                         modifier = Modifier.weight(layout.id)
                     )
                     Text(
@@ -73,16 +76,18 @@ fun VideosList(
                     )
                     Text(
                         text = "Action",
-                        modifier = Modifier.weight(layout.status)
+                        modifier = Modifier.weight(layout.action)
                     )
                 }
             }
         }
-        items(videos, key = { it.id }) { video ->
+        itemsIndexed(videos, key = { _, video -> video.id }) { index, video ->
             VideoCard(
+                index = index,
                 video = video,
                 modifier = Modifier.animateItem(),
                 onDelete = { onDeleteVideo(video.id) },
+                onFormatSelection = { onFormatSelection(video.id, it) }
             )
         }
     }

@@ -8,26 +8,35 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
+import dev.tekofx.pinchodownloader.entities.VideoFormat
+import dev.tekofx.pinchodownloader.log.LogStore
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VideoCard(
+    index: Int,
     video: Video,
     modifier: Modifier,
     onDelete: () -> Unit,
+    onFormatSelection: (VideoFormat?) -> Unit,
 ) {
 
     val animatedProgress by animateFloatAsState(
@@ -35,6 +44,7 @@ fun VideoCard(
         animationSpec = tween(300),
         label = "progress"
     )
+
 
     Card(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -44,13 +54,11 @@ fun VideoCard(
         ) {
 
             Text(
-                text = video.id.toString(), modifier = Modifier.weight(layout.id)
+                text = "${index + 1}", modifier = Modifier.weight(layout.id)
             )
-            AsyncImage(
-                model = video.thumbnail,
-                contentDescription = null,
-                modifier = Modifier.weight(layout.thumbnail).height(54.dp),
-                contentScale = ContentScale.Crop
+            VideoThumbnail(
+                video = video,
+                modifier = Modifier.weight(layout.thumbnail).height(54.dp)
             )
             Text(
                 text = video.title,
@@ -60,19 +68,14 @@ fun VideoCard(
             )
 
             Row(modifier = Modifier.weight(layout.format)) {
-                Card(
-                    colors = CardDefaults.cardColors().copy(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                if (video.status == TaskStatus.AGE_RESTRICTED) {
+                    Text("Age Restricted")
+                } else {
+                    FormatComboBox(
+                        formats = video.formats,
+                        selectedFormat = video.selectedFormat,
+                        onFormatSelected = onFormatSelection
                     )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(imageVector = Icons.Default.VideoSettings, contentDescription = null)
-                        Text(text = video.format)
-                    }
                 }
             }
 
@@ -102,6 +105,10 @@ fun VideoCard(
                         TaskStatus.ERROR -> Icon(
                             imageVector = Icons.Filled.Close, contentDescription = null, tint = status.color
                         )
+
+                        TaskStatus.AGE_RESTRICTED -> Icon(
+                            imageVector = Icons.Filled.Close, contentDescription = null, tint = status.color
+                        )
                     }
                 }
 
@@ -124,5 +131,47 @@ fun VideoCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun VideoThumbnail(
+    video: Video,
+    modifier: Modifier = Modifier
+) {
+    val platformContext = LocalPlatformContext.current
+
+    var currentThumbnailIndex by remember(video.id) { mutableStateOf(0) }
+
+    val currentUrl = video.thumbnails.getOrNull(currentThumbnailIndex)
+
+    if (!currentUrl.isNullOrBlank()) {
+        val imageRequest = ImageRequest.Builder(platformContext)
+            .data(currentUrl)
+            .crossfade(true)
+            .build()
+
+        AsyncImage(
+            model = imageRequest,
+            contentDescription = "Video Thumbnail",
+            contentScale = ContentScale.Crop,
+            modifier = modifier.size(width = 120.dp, height = 90.dp),
+            onError = { errorState ->
+                LogStore.warn(
+                    "VideoThumbnail",
+                    "Fallo al cargar miniatura en índice $currentThumbnailIndex: ${errorState.result.throwable.message}"
+                )
+
+                if (currentThumbnailIndex < video.thumbnails.lastIndex) {
+                    currentThumbnailIndex++
+                }
+            }
+        )
+    } else {
+        AsyncImage(
+            model = "https://i.ytimg.com/vi_webp/b58P4phxXxA/maxresdefault.webp",
+            contentDescription = null,
+            contentScale = ContentScale.Crop
+        )
     }
 }

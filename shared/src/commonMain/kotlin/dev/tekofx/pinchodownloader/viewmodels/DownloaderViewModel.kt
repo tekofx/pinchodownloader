@@ -4,12 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
-import dev.tekofx.pinchodownloader.entities.VideoInfoResult
 import dev.tekofx.pinchodownloader.entities.states.DownloaderState
-import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
 import dev.tekofx.pinchodownloader.log.LogStore
-import dev.tekofx.pinchodownloader.ytdlp.downloadYtDlp
-import dev.tekofx.pinchodownloader.ytdlp.getVideoInfo
+import dev.tekofx.pinchodownloader.ytdlp.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -23,41 +20,108 @@ class DownloaderViewModel : ViewModel() {
     private val _snackbar = MutableStateFlow<String?>(null)
     val snackbar: StateFlow<String?> = _snackbar
 
-    fun addToQueue() {
+    fun onSubmitUrl() {
 
         if (!isValidUrl(_state.value.url)) {
             _snackbar.value = "Url not valid"
             return
         }
 
-        _state.update { it.copy(loading = true) }
-        viewModelScope.launch {
-            when (val result = getVideoInfo(_state.value.url)) {
-                is VideoInfoResult.Success -> {
-                    if (_state.value.videos.any { it.url == result.url }) {
-                        _snackbar.value = "Video already in queue"
-                    } else {
-                        _state.update { s ->
-                            s.copy(
-                                videos = s.videos + Video(
-                                    id = s.videos.size + 1,
-                                    title = result.title,
-                                    thumbnail = result.thumbnail,
-                                    url = state.value.url,
-                                    format = result.format
-                                )
-                            )
-                        }
-                    }
-                    onUrlChange("")
-                }
 
-                is VideoInfoResult.Error -> {
-                    _state.update { it.copy(status = result.message) }
-                }
+        viewModelScope.launch {
+            if (_state.value.url.contains("&list=")) {
+                addPlaylistToQueue(_state.value.url)
+            } else {
+                _state.update { it.copy(loading = true, loaderMessage = "Getting video") }
+                addSingleVideoToQueue(_state.value.url)
             }
             _state.update { it.copy(loading = false) }
         }
+
+    }
+
+    private suspend fun addSingleVideoToQueue(url: String) {
+        if (_state.value.videos.any { it.url == url }) {
+            LogStore.debug("addToQueue", "Video already in queue")
+            _snackbar.value = "Video already in queue"
+        } else {
+            when (val videoInfoResult = fetchVideo(url)) {
+                is YtDlpVideoResult.Success -> {
+                    _state.update { s ->
+                        s.copy(
+                            videos = s.videos + videoInfoResult.video.toVideo(),
+                        )
+                    }
+                }
+
+
+                is YtDlpVideoResult.AgeRestricted -> {
+                    _state.update { s ->
+                        s.copy(
+                            videos = s.videos + videoInfoResult.video.toVideo(),
+                        )
+                    }
+                }
+
+                is YtDlpVideoResult.Error -> {
+                    LogStore.error("addSingleVideoToQueue", videoInfoResult.toString())
+                    _state.update { it.copy(status = videoInfoResult.message) }
+                }
+            }
+
+        }
+    }
+
+    fun confirmAddPlaylistToQueue() {
+
+        val tempPlaylist = _state.value.tempPlaylist ?: return
+
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    loading = true,
+                    loaderMessage = "Loading playlist videos"
+                )
+            }
+            tempPlaylist.videos.forEachIndexed { index, minimalVideoInfo ->
+                addSingleVideoToQueue(minimalVideoInfo.url)
+                _state.update {
+                    it.copy(
+                        loading = true,
+                        loaderMessage = "Added ${index + 1}/${tempPlaylist.videos.size}"
+                    )
+                }
+            }
+            _state.update {
+                it.copy(
+                    loading = false,
+                )
+            }
+        }
+    }
+
+    private suspend fun addPlaylistToQueue(url: String) {
+        _state.update { it.copy(loading = true, loaderMessage = "Getting playlist") }
+
+
+        when (val playlistInfoResult = fetchPlaylist(url)) {
+            is YtDlpPlaylistResult.Success -> {
+                _state.update {
+                    it.copy(
+                        showPlaylistPopup = true,
+                        playlistPopupText = "Are you sure you want to add ${playlistInfoResult.ytDlpPlaylist.videos.size} videos to queue?",
+                        tempPlaylist = playlistInfoResult.ytDlpPlaylist
+                    )
+                }
+
+            }
+
+            is YtDlpPlaylistResult.Error -> {
+                LogStore.error("addPlaylistToQueue", playlistInfoResult.toString())
+                _state.update { it.copy(status = playlistInfoResult.message) }
+            }
+        }
+
     }
 
 
@@ -72,27 +136,41 @@ class DownloaderViewModel : ViewModel() {
     fun downloadAll() {
         viewModelScope.launch {
             _state.update { it.copy(progress = 0f, downloading = true, latestDownloadVideoIndex = 0) }
-            val videos = _state.value.videos
 
-            for (i in videos.indices) {
-                updateVideo(i) { it.copy(status = TaskStatus.IN_PROGRESS) }
+            val snapshotVideos = _state.value.videos
+
+            snapshotVideos.forEachIndexed { index, video ->
+                if (video.status == TaskStatus.ERROR) return@forEachIndexed
+
+
+                val videoId = video.id
+
+                updateVideo(videoId) { it.copy(status = TaskStatus.IN_PROGRESS) }
+
                 try {
-                    downloadYtDlp(videos[i].url, getDownloadsDir()) { p ->
-                        updateVideo(i) { it.copy(progress = p.toFloat()) }
+                    downloadYtDlp(video.url, video.selectedFormat) { p ->
+                        updateVideo(videoId) { it.copy(progress = p.toFloat()) }
                         _state.update { s ->
-                            s.copy(progress = ((i + p) / s.videos.size).toFloat())
+                            s.copy(progress = ((index + p) / snapshotVideos.size).toFloat())
                         }
                     }
                 } catch (e: RuntimeException) {
                     LogStore.error("YT-Dlp Download", e.message ?: "Unknown")
-                    updateVideo(i) { it.copy(status = TaskStatus.ERROR) }
-                    continue
+                    updateVideo(videoId) { it.copy(status = TaskStatus.ERROR) }
+                    return@forEachIndexed
                 }
-                updateVideo(i) { it.copy(status = TaskStatus.COMPLETED) }
-                _state.update { s -> s.copy(latestDownloadVideoIndex = i + 1) }
+
+                updateVideo(videoId) { it.copy(status = TaskStatus.COMPLETED) }
+                _state.update { s -> s.copy(latestDownloadVideoIndex = index + 1) }
             }
+
             _state.update { it.copy(progress = 1f, status = "Done", downloading = false) }
         }
+    }
+
+
+    fun togglePopupDialog() {
+        _state.update { it.copy(showPlaylistPopup = !it.showPlaylistPopup) }
     }
 
     fun onUrlChange(url: String) {
@@ -111,15 +189,20 @@ class DownloaderViewModel : ViewModel() {
         _state.update { it.copy(videos = emptyList()) }
     }
 
-    fun deleteVideo(id: Int) {
+    fun deleteVideo(id: String) {
         _state.update { s -> s.copy(videos = s.videos.filter { it.id != id }) }
     }
 
-    private fun updateVideo(index: Int, transform: (Video) -> Video) {
-        _state.update { s ->
-            s.copy(videos = s.videos.toMutableList().also { it[index] = transform(it[index]) })
+    fun updateVideo(videoId: String, transform: (Video) -> Video) {
+        _state.update { currentState ->
+            currentState.copy(
+                videos = currentState.videos.map { video ->
+                    if (video.id == videoId) transform(video) else video
+                }
+            )
         }
     }
+
 
     fun dismissSnackbar() {
         _snackbar.value = null
