@@ -18,11 +18,12 @@ import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoFormat
 
 data class ColumnLayout(
-    val id: Float = 0.02f,
+    val id: Float = 0.04f,
     val thumbnail: Float = 0.1f,
     val title: Float = 0.25f,
     val format: Float = 0.15f,
-    val status: Float = 0.1f,
+    val status: Float = 0.12f,
+    val action: Float = 0.07f,
 )
 
 val layout = ColumnLayout()
@@ -54,7 +55,7 @@ fun VideosList(
                     horizontalArrangement = Arrangement.spacedBy(columnSpacing)
                 ) {
                     Text(
-                        text = "Id",
+                        text = "#",
                         modifier = Modifier.weight(layout.id)
                     )
                     Text(
@@ -75,7 +76,7 @@ fun VideosList(
                     )
                     Text(
                         text = "Action",
-                        modifier = Modifier.weight(layout.status)
+                        modifier = Modifier.weight(layout.action)
                     )
                 }
             }

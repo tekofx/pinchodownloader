@@ -50,7 +50,7 @@ fun VideoCard(
         ) {
 
             Text(
-                text = "#${index}", modifier = Modifier.weight(layout.id)
+                text = "$index", modifier = Modifier.weight(layout.id)
             )
             AsyncImage(
                 model = video.thumbnail,
