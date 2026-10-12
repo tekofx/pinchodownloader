@@ -8,10 +8,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -20,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
+import dev.tekofx.pinchodownloader.ytdlp.YtDlpFormat
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -60,19 +63,12 @@ fun VideoCard(
             )
 
             Row(modifier = Modifier.weight(layout.format)) {
-                Card(
-                    colors = CardDefaults.cardColors().copy(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(imageVector = Icons.Default.VideoSettings, contentDescription = null)
-                        video.ytDlpFormats[0].formatNote?.let { Text(text = it) }
-                    }
+                if (video.status == TaskStatus.AGE_RESTRICTED) {
+                    Text("Age Restricted")
+
+                } else {
+
+                    FormatComboBox(formats = video.ytDlpFormats, onFormatSelected = {})
                 }
             }
 
@@ -102,6 +98,10 @@ fun VideoCard(
                         TaskStatus.ERROR -> Icon(
                             imageVector = Icons.Filled.Close, contentDescription = null, tint = status.color
                         )
+
+                        TaskStatus.AGE_RESTRICTED -> Icon(
+                            imageVector = Icons.Filled.Close, contentDescription = null, tint = status.color
+                        )
                     }
                 }
 
@@ -122,6 +122,65 @@ fun VideoCard(
                         tint = MaterialTheme.colorScheme.error
                     )
                 }
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FormatComboBox(
+    modifier: Modifier = Modifier,
+    formats: List<YtDlpFormat>, // 💡 Aceptamos tu lista de objetos reales
+    onFormatSelected: (YtDlpFormat) -> Unit // 💡 Devolvemos el objeto completo seleccionado
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    // Controlamos el formato seleccionado actual (por defecto el primero)
+    var selectedFormat by remember { mutableStateOf(formats.firstOrNull()) }
+
+    // Función auxiliar para mostrar un texto limpio en la interfaz
+    // Si formatNote es null o vacío, muestra el formatId (ej: "137" o "22")
+    val labelText = { format: YtDlpFormat? ->
+        if (format == null) "No formats available"
+        else format.formatNote?.ifBlank { null } ?: "Format ID: ${format.formatId}"
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = labelText(selectedFormat), // Mostramos el texto amigable
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Quality / Format") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            formats.forEach { ytDlpFormat ->
+                DropdownMenuItem(
+                    text = {
+                        // Mostramos el texto amigable en la lista desplegable
+                        Text(text = labelText(ytDlpFormat))
+                    },
+                    onClick = {
+                        selectedFormat = ytDlpFormat
+                        expanded = false
+                        onFormatSelected(ytDlpFormat) // Notificamos el objeto completo al exterior
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                )
             }
         }
     }

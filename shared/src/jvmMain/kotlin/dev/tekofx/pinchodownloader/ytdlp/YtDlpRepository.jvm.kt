@@ -1,5 +1,6 @@
 package dev.tekofx.pinchodownloader.ytdlp
 
+import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.log.LogStatus
 import dev.tekofx.pinchodownloader.log.LogStore
 import kotlinx.coroutines.Dispatchers
@@ -55,17 +56,15 @@ actual suspend fun fetchVideo(url: String): YtDlpVideoResult {
                 val stderr = process.errorStream.bufferedReader().readText()
 
                 if (stderr.contains("Sign in to confirm your age")) {
-                    val minimalVideoInfo = getOEmbed(url)
-                    if (minimalVideoInfo != null) {
-                        return@withContext YtDlpVideoResult.AgeRestricted(minimalVideoInfo)
-                    }
+                    val minimalVideoInfo = fetchOembed(url)
+                    return@withContext YtDlpVideoResult.AgeRestricted(minimalVideoInfo)
 
                 }
                 return@withContext YtDlpVideoResult.Error("yt-dlp failed: ${stderr.take(200)}")
 
             }
-            val videoInfo = parseVideoInfo(json)
-            YtDlpVideoResult.Success(videoInfo)
+            val ytDlpVideo = parseYtDlpVideo(json)
+            YtDlpVideoResult.Success(ytDlpVideo.toVideo())
         } catch (e: JsonDecodingException) {
             LogStore.error("getVideoInfo", e.toString())
             YtDlpVideoResult.Error(e.message ?: "Unknown error")
@@ -82,7 +81,7 @@ actual suspend fun fetchVideo(url: String): YtDlpVideoResult {
 
 }
 
-fun parseVideoInfo(jsonString: String): YtDlpVideo {
+fun parseYtDlpVideo(jsonString: String): YtDlpVideo {
     val jsonConfig = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
@@ -100,19 +99,25 @@ fun parsePlaylistInfo(jsonString: String): YtDlpPlaylist {
     return jsonConfig.decodeFromString<YtDlpPlaylist>(jsonString)
 }
 
-actual suspend fun getOEmbed(url: String): YtDlpPlaylistVideo? {
+fun parseOembed(jsonString: String): YtVideoOembed {
+    val jsonConfig = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
+
+    return jsonConfig.decodeFromString<YtVideoOembed>(jsonString)
+}
+
+actual suspend fun fetchOembed(url: String): Video {
     val videoId = extractVideoId(url)
     return withContext(Dispatchers.IO) {
         val url = "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=$videoId&format=json"
         val json = java.net.URL(url).readText()
-        val obj = Json.parseToJsonElement(json) as? JsonObject ?: return@withContext null
+        val ytVideoOembed = parseOembed(json)
 
-        YtDlpPlaylistVideo(
-            id = "1",
-            title = obj.getString("title") ?: "",
-            thumbnails = listOf(YtDlpThumbnail("1")),
-            url = "https://www.youtube.com/watch?v=$videoId",
-        )
+        return@withContext ytVideoOembed.toVideo(id = videoId, url = url)
+
+
     }
 }
 

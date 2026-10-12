@@ -50,40 +50,25 @@ class DownloaderViewModel : ViewModel() {
         } else {
             when (val videoInfoResult = fetchVideo(url)) {
                 is YtDlpVideoResult.Success -> {
-                    val videoInfo = videoInfoResult.ytDlpVideo
                     _state.update { s ->
                         s.copy(
-                            videos = s.videos + Video(
-                                id = s.videos.size + 1,
-                                title = videoInfo.title,
-                                thumbnail = videoInfo.thumbnails[0].url,
-                                url = url,
-                                ytDlpFormats = videoInfo.ytDlpFormats
-                            )
+                            videos = s.videos + videoInfoResult.video,
                         )
                     }
                 }
 
 
                 is YtDlpVideoResult.AgeRestricted -> {
-                    val minimalVideoInfo = videoInfoResult.ytDlpPlaylistVideo
                     _state.update { s ->
                         s.copy(
-                            videos = s.videos + Video(
-                                id = s.videos.size + 1,
-                                title = minimalVideoInfo.title,
-                                thumbnail = minimalVideoInfo.thumbnails[0].url,
-                                url = state.value.url,
-                                ytDlpFormats = listOf(YtDlpFormat(formatId = "-1", formatNote = "Age Restricted")),
-                                status = TaskStatus.ERROR
-                            )
+                            videos = s.videos + videoInfoResult.video
                         )
                     }
                 }
 
                 is YtDlpVideoResult.Error -> {
                     LogStore.error("addSingleVideoToQueue", videoInfoResult.toString())
-                    val test = getOEmbed(url)
+                    val test = fetchOembed(url)
                     LogStore.error("addSingleVideoToQueue", test.toString())
 
                     _state.update { it.copy(status = videoInfoResult.message) }
@@ -182,11 +167,11 @@ class DownloaderViewModel : ViewModel() {
         _state.update { it.copy(videos = emptyList()) }
     }
 
-    fun deleteVideo(id: Int) {
+    fun deleteVideo(id: String) {
         _state.update { s -> s.copy(videos = s.videos.filter { it.id != id }) }
     }
 
-    fun updateVideo(videoId: Int, transform: (Video) -> Video) {
+    fun updateVideo(videoId: String, transform: (Video) -> Video) {
         _state.update { currentState ->
             currentState.copy(
                 videos = currentState.videos.map { video ->

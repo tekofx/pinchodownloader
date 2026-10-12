@@ -30,7 +30,7 @@ fun Queue(
     onDownloadAll: () -> Unit,
     onClearAll: () -> Unit,
     onClearCompleted: () -> Unit,
-    onDeleteVideo: (Int) -> Unit,
+    onDeleteVideo: (String) -> Unit,
 ) {
 
 

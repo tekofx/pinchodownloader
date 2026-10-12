@@ -47,3 +47,9 @@ data class YtDlpPlaylist(
     val videos: List<YtDlpPlaylistVideo>
 )
 
+@Serializable
+data class YtVideoOembed(
+    val title: String,
+    @SerialName("thumbnail_url")
+    val thumbnail: String,
+)

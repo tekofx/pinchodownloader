@@ -30,7 +30,7 @@ val columnSpacing = 15.dp
 @Composable
 fun VideosList(
     videos: List<Video>,
-    onDeleteVideo: (Int) -> Unit,
+    onDeleteVideo: (String) -> Unit,
 ) {
 
 
