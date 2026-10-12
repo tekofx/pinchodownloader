@@ -13,17 +13,20 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoFormat
+import dev.tekofx.pinchodownloader.log.LogStore
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -42,6 +45,14 @@ fun VideoCard(
         label = "progress"
     )
 
+    val platformContext = LocalPlatformContext.current
+
+    // Make coil try to fetch thumbnails until it gets one
+    val imageRequest = ImageRequest.Builder(platformContext)
+        .data(video.thumbnails)
+        .crossfade(true)
+        .build()
+
     Card(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(10.dp).fillMaxWidth(),
@@ -52,11 +63,9 @@ fun VideoCard(
             Text(
                 text = "$index", modifier = Modifier.weight(layout.id)
             )
-            AsyncImage(
-                model = video.thumbnail,
-                contentDescription = null,
-                modifier = Modifier.weight(layout.thumbnail).height(54.dp),
-                contentScale = ContentScale.Crop
+            VideoThumbnail(
+                video = video,
+                modifier = Modifier.weight(layout.thumbnail).height(54.dp)
             )
             Text(
                 text = video.title,
@@ -132,4 +141,48 @@ fun VideoCard(
     }
 }
 
+@Composable
+fun VideoThumbnail(
+    video: Video,
+    modifier: Modifier = Modifier
+) {
+    val platformContext = LocalPlatformContext.current
 
+    // 💡 CONTROL DE ÍNDICE: Empezamos intentando cargar la primera miniatura (la de mayor preferencia)
+    var currentThumbnailIndex by remember(video.id) { mutableStateOf(0) }
+
+    // Evaluamos si aún quedan URLs en la lista por intentar cargar
+    val currentUrl = video.thumbnails.getOrNull(currentThumbnailIndex)
+
+    if (!currentUrl.isNullOrBlank()) {
+        val imageRequest = ImageRequest.Builder(platformContext)
+            .data(currentUrl) // Pasamos únicamente el String de la URL activa actual
+            .crossfade(true)
+            .build()
+
+        AsyncImage(
+            model = imageRequest,
+            contentDescription = "Video Thumbnail",
+            contentScale = ContentScale.Crop,
+            modifier = modifier.size(width = 120.dp, height = 90.dp),
+            // 💡 LA SOLUCIÓN: Si esta URL falla, avanzamos el índice para forzar a Coil a intentar la siguiente
+            onError = { errorState ->
+                LogStore.warn(
+                    "VideoThumbnail",
+                    "Fallo al cargar miniatura en índice $currentThumbnailIndex: ${errorState.result.throwable.message}"
+                )
+
+                if (currentThumbnailIndex < video.thumbnails.lastIndex) {
+                    currentThumbnailIndex++ // Avanza a la miniatura de respaldo inferior
+                }
+            }
+        )
+    } else {
+        // Cuadro de respaldo vacío o icono por defecto si se agotaron todas las URLs de la lista
+        AsyncImage(
+            model = "https://i.ytimg.com/vi_webp/b58P4phxXxA/maxresdefault.webp",
+            contentDescription = null,
+            contentScale = ContentScale.Crop
+        )
+    }
+}

@@ -161,13 +161,6 @@ actual suspend fun fetchPlaylist(url: String): YtDlpPlaylistResult {
     }
 }
 
-
-private fun getAllFormats(jsonString: String): List<YtDlpFormat> {
-    val jsonConfig = Json { ignoreUnknownKeys = true } // Ignora los campos que no mapeamos
-    val ytDlpFormat = jsonConfig.decodeFromString<List<YtDlpFormat>>(jsonString)
-    return ytDlpFormat
-}
-
 private fun JsonObject.getString(key: String): String? =
     (this[key] as? JsonPrimitive)?.contentOrNull
 

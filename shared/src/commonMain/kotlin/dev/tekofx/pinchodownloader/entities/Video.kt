@@ -3,7 +3,7 @@ package dev.tekofx.pinchodownloader.entities
 data class Video(
     val id: String,
     val title: String,
-    val thumbnail: String,
+    val thumbnails: List<String>,
     val url: String,
     val formats: List<VideoFormat>,
     val selectedFormat: VideoFormat?,

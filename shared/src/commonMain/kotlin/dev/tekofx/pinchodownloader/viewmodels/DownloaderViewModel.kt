@@ -78,16 +78,15 @@ class DownloaderViewModel : ViewModel() {
 
         when (val playlistInfoResult = fetchPlaylist(url)) {
             is YtDlpPlaylistResult.Success -> {
-                _state.update { it.copy(loading = true, loaderMessage = "Adding playlist videos") }
 
-                val minimalVideoInfoList = playlistInfoResult.ytDlpPlaylist
+                val ytDlpPlaylist = playlistInfoResult.ytDlpPlaylist
 
-                minimalVideoInfoList.videos.forEachIndexed { index, minimalVideoInfo ->
+                ytDlpPlaylist.videos.forEachIndexed { index, minimalVideoInfo ->
                     addSingleVideoToQueue(minimalVideoInfo.url)
                     _state.update {
                         it.copy(
                             loading = true,
-                            loaderMessage = "Added ${index + 1}/${minimalVideoInfoList.videos.size}"
+                            loaderMessage = "Added ${index + 1}/${ytDlpPlaylist.videos.size}"
                         )
                     }
                 }

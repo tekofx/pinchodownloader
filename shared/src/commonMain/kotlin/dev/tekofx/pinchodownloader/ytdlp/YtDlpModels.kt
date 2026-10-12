@@ -32,6 +32,14 @@ data class YtDlpFormat(
 @Serializable
 data class YtDlpThumbnail(
     val url: String,
+    val id: String,
+    val preference: Int
+)
+
+
+@Serializable
+data class YtDlpPlayListVideoThumbnail(
+    val url: String,
 )
 
 @Serializable
@@ -39,7 +47,7 @@ data class YtDlpPlaylistVideo(
     val id: String,
     val title: String,
     val url: String,
-    val thumbnails: List<YtDlpThumbnail>,
+    val thumbnails: List<YtDlpPlayListVideoThumbnail>,
 )
 
 @Serializable

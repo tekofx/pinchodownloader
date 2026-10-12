@@ -3,6 +3,7 @@ package dev.tekofx.pinchodownloader.ytdlp
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoFormat
+import dev.tekofx.pinchodownloader.log.LogStore
 
 
 fun YtDlpFormat.toFormat(): VideoFormat {
@@ -48,11 +49,19 @@ fun YtDlpVideo.toVideo(): Video {
         ?: uniqueFormatsPerResolution.firstOrNull()
         ?: this.ytDlpFormats.lastOrNull()
 
+    val orderedThumbnailUrls = this.thumbnails
+        .sortedByDescending { it.preference }
+        .map { it.url }
+
+
+
+    LogStore.debug("test", "Ordered thumbnail urls: $orderedThumbnailUrls")
+
     return Video(
         id = id,
         url = url,
         title = title,
-        thumbnail = thumbnails.firstOrNull()?.url ?: "",
+        thumbnails = orderedThumbnailUrls,
         formats = uniqueFormatsPerResolution.toFormatList(),
         selectedFormat = defaultFormat?.toFormat(),
         status = TaskStatus.PENDING,
@@ -65,7 +74,13 @@ fun YtVideoOembed.toYtDlpVideo(id: String?, url: String): YtDlpVideo {
     return YtDlpVideo(
         id = id ?: "",
         title = title,
-        thumbnails = listOf(YtDlpThumbnail(thumbnail)),
+        thumbnails = listOf(
+            YtDlpThumbnail(
+                id = "0",
+                preference = 0,
+                url = thumbnail
+            )
+        ),
         url = url,
         ytDlpFormats = emptyList(),
     )
