@@ -1,16 +1,23 @@
 package dev.tekofx.pinchodownloader.entities
 
-sealed class UrlInfoResult {
-
-    data class SingleVideo(val videoInfo: VideoInfo) : UrlInfoResult()
-
-    data class Playlist(val videosInfo: List<VideoInfo>) : UrlInfoResult()
-
-    data class Error(val message: String) : UrlInfoResult()
-}
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 
-data class VideoInfo(val title: String, val thumbnail: String, val url: String, val format: String)
+@Serializable
+data class VideoInfo(
+    val id: String,
+    val title: String,
+    val thumbnail: String,
+    @SerialName("webpage_url") val url: String,
+    val formats: List<Format>
+)
+
+@Serializable
+data class Format(
+    @SerialName("format_id") val formatId: String,
+    @SerialName("format_note") val formatNote: String? = null,
+)
 
 
 data class MinimalVideoInfo(val title: String, val url: String, val thumbnail: String)

@@ -5,9 +5,7 @@ import dev.tekofx.pinchodownloader.log.LogStatus
 import dev.tekofx.pinchodownloader.log.LogStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
-import java.io.IOException
 
 actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Double) -> Unit) {
     withContext(Dispatchers.IO) {
@@ -41,34 +39,6 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
     }
 }
 
-fun extractVideoId(url: String): String? {
-    // /watch?v=VIDEO_ID
-    url.takeIf { it.contains("/watch?v=") }?.let {
-        return it.substringAfter("v=").substringBefore("&")
-    }
-
-    // /shorts/VIDEO_ID
-    url.takeIf { it.contains("/shorts/") }?.let {
-        return it.substringAfter("/shorts/").substringBefore("?").substringBefore("/")
-    }
-
-    // /embed/VIDEO_ID
-    url.takeIf { it.contains("/embed/") }?.let {
-        return it.substringAfter("/embed/").substringBefore("?").substringBefore("/")
-    }
-
-    // /live/VIDEO_ID
-    url.takeIf { it.contains("/live/") }?.let {
-        return it.substringAfter("/live/").substringBefore("?").substringBefore("/")
-    }
-
-    // youtu.be/VIDEO_ID
-    url.takeIf { it.contains("youtu.be/") }?.let {
-        return it.substringAfter("youtu.be/").substringBefore("?").substringBefore("/")
-    }
-
-    return null
-}
 
 actual suspend fun getVideoInfo(url: String): VideoInfoResult {
     return withContext(Dispatchers.IO) {
@@ -93,23 +63,26 @@ actual suspend fun getVideoInfo(url: String): VideoInfoResult {
 
             }
 
-            val root = Json.parseToJsonElement(json) as? JsonObject
-                ?: return@withContext VideoInfoResult.Error("Invalid response from yt-dlp (got null or non-object)")
+            val videoInfo = parseVideoInfo(json)
 
-            val title = root.getString("title")
-                ?: return@withContext VideoInfoResult.Error("No title in response")
-            val formatNote = root.getString("format_note")?.substringBefore("+")
-                ?: return@withContext VideoInfoResult.Error("No format note in response")
-            val thumbnail = root.getString("thumbnail")
-                ?: return@withContext VideoInfoResult.Error("No thumbnail in response")
+            LogStore.debug("Parse", videoInfo.toString())
 
-            VideoInfoResult.Success(VideoInfo(title, thumbnail, url, formatNote))
+            VideoInfoResult.Success(videoInfo)
         } catch (e: Exception) {
             LogStore.error("getVideoInfo", e.message.toString())
             VideoInfoResult.Error(e.message ?: "Unknown error")
         }
 
     }
+}
+
+fun parseVideoInfo(jsonString: String): VideoInfo {
+    val jsonConfig = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
+
+    return jsonConfig.decodeFromString<VideoInfo>(jsonString)
 }
 
 actual suspend fun getOEmbed(url: String): MinimalVideoInfo? {
@@ -127,8 +100,6 @@ actual suspend fun getOEmbed(url: String): MinimalVideoInfo? {
     }
 }
 
-fun JsonObject.getString(key: String): String? =
-    (this[key] as? JsonPrimitive)?.contentOrNull
 
 actual suspend fun getPlaylistInfo(url: String): PlaylistInfoResult {
     return withContext(Dispatchers.IO) {
@@ -160,7 +131,17 @@ actual suspend fun getPlaylistInfo(url: String): PlaylistInfoResult {
     }
 }
 
-fun getThumbnail(entry: JsonObject): String? {
+
+private fun getAllFormats(jsonString: String): List<Format> {
+    val jsonConfig = Json { ignoreUnknownKeys = true } // Ignora los campos que no mapeamos
+    val format = jsonConfig.decodeFromString<List<Format>>(jsonString)
+    return format
+}
+
+private fun JsonObject.getString(key: String): String? =
+    (this[key] as? JsonPrimitive)?.contentOrNull
+
+private fun getThumbnail(entry: JsonObject): String? {
     entry.getString("thumbnail")?.let { return it }  // null here (flat playlist)
 
     val arr = entry["thumbnails"] as? JsonArray ?: return null
@@ -170,59 +151,32 @@ fun getThumbnail(entry: JsonObject): String? {
         ?.getString("url")
 }
 
-@OptIn(ExperimentalSerializationApi::class)
-actual suspend fun getUrlInfo(url: String): UrlInfoResult {
-    return withContext(Dispatchers.IO) {
-        try {
-            val entries = getEntries(url)
-            val videos = mutableListOf<VideoInfo>()
 
-            for (entry in entries) {
-                LogStore.debug("getUrlInfo", "entry: $entry")
-                val title = entry.getString("title")
-                    ?: return@withContext UrlInfoResult.Error("No title in response")
-                val thumbnail = entry.getString("thumbnail")
-                    ?: return@withContext UrlInfoResult.Error("No thumbnail in response")
-                val formatNote = entry["format_note"]?.jsonPrimitive?.content?.substringBefore("+")
-                    ?: return@withContext UrlInfoResult.Error("No format note in response")
-                val videoUrl = entry["webpage_url"]?.jsonPrimitive?.content
-                    ?: "https://www.youtube.com/watch?v=${entry["id"]?.jsonPrimitive?.content}"
-
-                videos.addLast(VideoInfo(title, thumbnail, videoUrl, formatNote))
-            }
-
-            if (videos.size > 1) {
-                UrlInfoResult.Playlist(videos)
-            } else
-                UrlInfoResult.SingleVideo(videos.first())
-
-
-        } catch (e: IOException) {
-            LogStore.error("yt-dlp", e.message ?: "IO error")
-            return@withContext UrlInfoResult.Error("yt-dlp not found: ${e.message}")
-        } catch (e: JsonException) {
-            LogStore.error("yt-dlp", "JSON parse error: ${e.message}")
-            return@withContext UrlInfoResult.Error("Invalid JSON from yt-dlp")
-        } catch (e: Exception) {
-            LogStore.error("yt-dlp", e.message ?: "unexpected")
-            return@withContext UrlInfoResult.Error("Unexpected error: ${e.message}")
-        }
-
-
+private fun extractVideoId(url: String): String? {
+    // /watch?v=VIDEO_ID
+    url.takeIf { it.contains("/watch?v=") }?.let {
+        return it.substringAfter("v=").substringBefore("&")
     }
+
+    // /shorts/VIDEO_ID
+    url.takeIf { it.contains("/shorts/") }?.let {
+        return it.substringAfter("/shorts/").substringBefore("?").substringBefore("/")
+    }
+
+    // /embed/VIDEO_ID
+    url.takeIf { it.contains("/embed/") }?.let {
+        return it.substringAfter("/embed/").substringBefore("?").substringBefore("/")
+    }
+
+    // /live/VIDEO_ID
+    url.takeIf { it.contains("/live/") }?.let {
+        return it.substringAfter("/live/").substringBefore("?").substringBefore("/")
+    }
+
+    // youtu.be/VIDEO_ID
+    url.takeIf { it.contains("youtu.be/") }?.let {
+        return it.substringAfter("youtu.be/").substringBefore("?").substringBefore("/")
+    }
+
+    return null
 }
-
-
-fun getEntries(url: String): List<JsonObject> {
-    val process = ProcessBuilder("yt-dlp", "-J", url)
-        .redirectErrorStream(false).start()
-    val json = process.inputStream.bufferedReader().readText()
-    process.waitFor()
-
-    val root = Json.parseToJsonElement(json).jsonObject
-
-    return (root["entries"] as? JsonArray)
-        ?.filterIsInstance<JsonObject>()   // ← drops JsonNull entries
-        ?: listOf(root)
-}
-

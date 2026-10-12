@@ -2,10 +2,7 @@ package dev.tekofx.pinchodownloader.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.tekofx.pinchodownloader.entities.PlaylistInfoResult
-import dev.tekofx.pinchodownloader.entities.TaskStatus
-import dev.tekofx.pinchodownloader.entities.Video
-import dev.tekofx.pinchodownloader.entities.VideoInfoResult
+import dev.tekofx.pinchodownloader.entities.*
 import dev.tekofx.pinchodownloader.entities.states.DownloaderState
 import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
 import dev.tekofx.pinchodownloader.log.LogStore
@@ -63,7 +60,7 @@ class DownloaderViewModel : ViewModel() {
                                 title = videoInfo.title,
                                 thumbnail = videoInfo.thumbnail,
                                 url = url,
-                                format = videoInfo.format
+                                formats = videoInfo.formats
                             )
                         )
                     }
@@ -79,7 +76,7 @@ class DownloaderViewModel : ViewModel() {
                                 title = minimalVideoInfo.title,
                                 thumbnail = minimalVideoInfo.thumbnail,
                                 url = state.value.url,
-                                format = "Age Restricted",
+                                formats = listOf(Format(formatId = "-1", formatNote = "Age Restricted")),
                                 status = TaskStatus.ERROR
                             )
                         )
