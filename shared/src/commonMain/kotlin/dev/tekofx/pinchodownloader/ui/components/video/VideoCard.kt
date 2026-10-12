@@ -61,7 +61,7 @@ fun VideoCard(
         ) {
 
             Text(
-                text = "$index", modifier = Modifier.weight(layout.id)
+                text = "${index + 1}", modifier = Modifier.weight(layout.id)
             )
             VideoThumbnail(
                 video = video,
@@ -148,15 +148,13 @@ fun VideoThumbnail(
 ) {
     val platformContext = LocalPlatformContext.current
 
-    // 💡 CONTROL DE ÍNDICE: Empezamos intentando cargar la primera miniatura (la de mayor preferencia)
     var currentThumbnailIndex by remember(video.id) { mutableStateOf(0) }
 
-    // Evaluamos si aún quedan URLs en la lista por intentar cargar
     val currentUrl = video.thumbnails.getOrNull(currentThumbnailIndex)
 
     if (!currentUrl.isNullOrBlank()) {
         val imageRequest = ImageRequest.Builder(platformContext)
-            .data(currentUrl) // Pasamos únicamente el String de la URL activa actual
+            .data(currentUrl)
             .crossfade(true)
             .build()
 
@@ -165,7 +163,6 @@ fun VideoThumbnail(
             contentDescription = "Video Thumbnail",
             contentScale = ContentScale.Crop,
             modifier = modifier.size(width = 120.dp, height = 90.dp),
-            // 💡 LA SOLUCIÓN: Si esta URL falla, avanzamos el índice para forzar a Coil a intentar la siguiente
             onError = { errorState ->
                 LogStore.warn(
                     "VideoThumbnail",
@@ -173,12 +170,11 @@ fun VideoThumbnail(
                 )
 
                 if (currentThumbnailIndex < video.thumbnails.lastIndex) {
-                    currentThumbnailIndex++ // Avanza a la miniatura de respaldo inferior
+                    currentThumbnailIndex++
                 }
             }
         )
     } else {
-        // Cuadro de respaldo vacío o icono por defecto si se agotaron todas las URLs de la lista
         AsyncImage(
             model = "https://i.ytimg.com/vi_webp/b58P4phxXxA/maxresdefault.webp",
             contentDescription = null,
