@@ -8,7 +8,7 @@ import dev.tekofx.pinchodownloader.entities.VideoFormat
 fun YtDlpFormat.toFormat(): VideoFormat {
     return VideoFormat(
         formatId = formatId,
-        name = "${height}p (${videoExtension})"
+        name = "${height}p"
     )
 }
 
@@ -19,26 +19,47 @@ fun List<YtDlpFormat>.toFormatList(): List<VideoFormat> {
 
 
 fun YtDlpVideo.toVideo(): Video {
-    // Filter formats with height and formatNote
-    val videoFormats = this.ytDlpFormats.filter { it.height != null && it.formatNote != "" }
+    val validVideoFormats = this.ytDlpFormats.filter {
+        it.height != null && !it.formatNote.isNullOrBlank() && it.vcodec != "none"
+    }
 
-    // Get FullHd format
-    val defaultFormat = videoFormats.firstOrNull { it.formatId == "299" }
-    // If not exists get the bigger format
-        ?: videoFormats.sortedByDescending { it.height }.firstOrNull()
+    // Group by height and we get the best format for each height
+    val uniqueFormatsPerResolution = validVideoFormats.groupBy { it.height }
+        .mapValues { (_, formatsInResolution) ->
+            // Sort to find best format
+            formatsInResolution.minByOrNull { format ->
+                val codec = format.vcodec ?: ""
+                val codecScore = when {
+                    codec.contains("vp9", ignoreCase = true) -> 1
+                    codec.contains("av01", ignoreCase = true) -> 2
+                    codec.contains("avc1", ignoreCase = true) -> 3
+                    else -> 4
+                }
+                val fpsValue = format.fps?.toInt() ?: 0
+                codecScore * 1000 - fpsValue
+            }
+        }
+        .values
+        .filterNotNull()
+        .sortedByDescending { it.height }
+
+    // Get 1080p as default format
+    val defaultFormat = uniqueFormatsPerResolution.firstOrNull { it.height == 1080 }
+        ?: uniqueFormatsPerResolution.firstOrNull()
         ?: this.ytDlpFormats.lastOrNull()
 
     return Video(
         id = id,
         url = url,
         title = title,
-        thumbnail = thumbnails[0].url,
-        formats = ytDlpFormats.toFormatList(),
+        thumbnail = thumbnails.firstOrNull()?.url ?: "",
+        formats = uniqueFormatsPerResolution.toFormatList(),
         selectedFormat = defaultFormat?.toFormat(),
         status = TaskStatus.PENDING,
         progress = 0f,
     )
 }
+
 
 fun YtVideoOembed.toYtDlpVideo(id: String?, url: String): YtDlpVideo {
     return YtDlpVideo(

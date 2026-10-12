@@ -24,6 +24,8 @@ data class YtDlpFormat(
     val height: Int? = null,
     @SerialName("video_ext")
     val videoExtension: String,
+    val fps: Double? = null,
+    val vcodec: String? = null
 )
 
 
