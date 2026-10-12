@@ -58,7 +58,7 @@ class DownloaderViewModel : ViewModel() {
                             videos = s.videos + Video(
                                 id = s.videos.size + 1,
                                 title = videoInfo.title,
-                                thumbnail = videoInfo.thumbnail,
+                                thumbnail = videoInfo.thumbnails[0].url,
                                 url = url,
                                 ytDlpFormats = videoInfo.ytDlpFormats
                             )
@@ -74,7 +74,7 @@ class DownloaderViewModel : ViewModel() {
                             videos = s.videos + Video(
                                 id = s.videos.size + 1,
                                 title = minimalVideoInfo.title,
-                                thumbnail = minimalVideoInfo.thumbnail,
+                                thumbnail = minimalVideoInfo.thumbnails[0].url,
                                 url = state.value.url,
                                 ytDlpFormats = listOf(YtDlpFormat(formatId = "-1", formatNote = "Age Restricted")),
                                 status = TaskStatus.ERROR

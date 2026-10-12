@@ -5,6 +5,8 @@ import dev.tekofx.pinchodownloader.log.LogStatus
 import dev.tekofx.pinchodownloader.log.LogStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.*
 
 actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Double) -> Unit) {
@@ -40,6 +42,7 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
 }
 
 
+@OptIn(ExperimentalSerializationApi::class)
 actual suspend fun getVideoInfo(url: String): YtDlpVideoInfoResult {
     return withContext(Dispatchers.IO) {
 
@@ -62,18 +65,22 @@ actual suspend fun getVideoInfo(url: String): YtDlpVideoInfoResult {
                 return@withContext YtDlpVideoInfoResult.Error("yt-dlp failed: ${stderr.take(200)}")
 
             }
-
             val videoInfo = parseVideoInfo(json)
-
-            LogStore.debug("Parse", videoInfo.toString())
-
             YtDlpVideoInfoResult.Success(videoInfo)
+        } catch (e: JsonDecodingException) {
+            LogStore.error("getVideoInfo", e.toString())
+            YtDlpVideoInfoResult.Error(e.message ?: "Unknown error")
+
+        } catch (e: SerializationException) {
+            // Captura cualquier otro error general de la librería de serialización
+            LogStore.error("Serialization Error", "No se pudo mapear el JSON a las entidades: ${e.message}")
+            YtDlpVideoInfoResult.Error(e.message ?: "Unknown error")
         } catch (e: Exception) {
-            LogStore.error("getVideoInfo", e.message.toString())
+            LogStore.error("getVideoInfo", e.toString())
             YtDlpVideoInfoResult.Error(e.message ?: "Unknown error")
         }
-
     }
+
 }
 
 fun parseVideoInfo(jsonString: String): YtDlpVideo {
@@ -85,6 +92,15 @@ fun parseVideoInfo(jsonString: String): YtDlpVideo {
     return jsonConfig.decodeFromString<YtDlpVideo>(jsonString)
 }
 
+fun parsePlaylistInfo(jsonString: String): YtDlpPlaylist {
+    val jsonConfig = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
+
+    return jsonConfig.decodeFromString<YtDlpPlaylist>(jsonString)
+}
+
 actual suspend fun getOEmbed(url: String): YtDlpPlaylistVideo? {
     val videoId = extractVideoId(url)
     return withContext(Dispatchers.IO) {
@@ -93,8 +109,9 @@ actual suspend fun getOEmbed(url: String): YtDlpPlaylistVideo? {
         val obj = Json.parseToJsonElement(json) as? JsonObject ?: return@withContext null
 
         YtDlpPlaylistVideo(
+            id = "1",
             title = obj.getString("title") ?: "",
-            thumbnail = obj.getString("thumbnail_url") ?: "",
+            thumbnails = listOf(YtDlpThumbnail("1")),
             url = "https://www.youtube.com/watch?v=$videoId",
         )
     }
@@ -109,25 +126,8 @@ actual suspend fun getPlaylistInfo(url: String): YtDlpPlaylistResult {
         val json = process.inputStream.bufferedReader().readText()
         process.waitFor()
 
-        val root = Json.parseToJsonElement(json).jsonObject
-
-        val entries = root["entries"]?.jsonArray
-
-
-        val videos: MutableList<YtDlpPlaylistVideo> = mutableListOf()
-
-        entries?.forEach { entry ->
-            val json = entry.jsonObject
-            val title = json["title"]?.jsonPrimitive?.content
-                ?: return@withContext YtDlpPlaylistResult.Error("No title in response")
-            val videoUrl = json["webpage_url"]?.jsonPrimitive?.content
-                ?: "https://www.youtube.com/watch?v=${json["id"]?.jsonPrimitive?.content}"
-            val thumbnail = getThumbnail(json) ?: ""
-            videos.addLast(YtDlpPlaylistVideo(title, videoUrl, thumbnail))
-        }
-
-        return@withContext YtDlpPlaylistResult.Success(YtDlpPlaylist(url, videos))
-
+        val ytDlpPlaylist = parsePlaylistInfo(json)
+        return@withContext YtDlpPlaylistResult.Success(ytDlpPlaylist)
     }
 }
 
