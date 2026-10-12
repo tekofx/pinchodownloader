@@ -1,6 +1,8 @@
 package dev.tekofx.pinchodownloader.ui.components.video
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -46,13 +48,33 @@ fun FormatComboBox(
             onDismissRequest = { expanded = false }
         ) {
             formats.forEach { ytDlpFormat ->
+                val isSelected = ytDlpFormat.formatId == selectedFormat?.formatId
+
                 DropdownMenuItem(
                     text = { Text(text = labelText(ytDlpFormat)) },
                     onClick = {
-                        expanded = false // Cerramos el menú flotante
-                        onFormatSelected(ytDlpFormat) // Notificamos al ViewModel el nuevo formato elegido
+                        expanded = false
+                        onFormatSelected(ytDlpFormat)
                     },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    // 💡 Agregamos un icono de confirmación al lado izquierdo si está seleccionado
+                    trailingIcon = if (isSelected) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else null,
+                    // 💡 Modificamos el color del texto de forma segura sin parámetros de fondo erróneos
+                    colors = MenuDefaults.itemColors(
+                        textColor = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                    )
                 )
             }
         }
