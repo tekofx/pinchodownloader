@@ -2,6 +2,21 @@ package dev.tekofx.pinchodownloader.ytdlp
 
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
+import dev.tekofx.pinchodownloader.entities.VideoFormat
+
+
+fun YtDlpFormat.toFormat(): VideoFormat {
+    return VideoFormat(
+        formatId = formatId,
+        name = "${height}p (${videoExtension})"
+    )
+}
+
+
+fun List<YtDlpFormat>.toFormatList(): List<VideoFormat> {
+    return map { it.toFormat() }
+}
+
 
 fun YtDlpVideo.toVideo(): Video {
     // Filter formats with height and formatNote
@@ -18,23 +33,20 @@ fun YtDlpVideo.toVideo(): Video {
         url = url,
         title = title,
         thumbnail = thumbnails[0].url,
-        ytDlpFormats = ytDlpFormats,
-        selectedFormat = defaultFormat,
+        formats = ytDlpFormats.toFormatList(),
+        selectedFormat = defaultFormat?.toFormat(),
         status = TaskStatus.PENDING,
         progress = 0f,
     )
 }
 
-fun YtVideoOembed.toVideo(id: String?, url: String): Video {
-    return Video(
+fun YtVideoOembed.toYtDlpVideo(id: String?, url: String): YtDlpVideo {
+    return YtDlpVideo(
         id = id ?: "",
         title = title,
-        thumbnail = thumbnail,
+        thumbnails = listOf(YtDlpThumbnail(thumbnail)),
         url = url,
         ytDlpFormats = emptyList(),
-        selectedFormat = null,
-        status = TaskStatus.AGE_RESTRICTED,
-        progress = 0f,
     )
 }
 

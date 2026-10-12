@@ -51,7 +51,7 @@ class DownloaderViewModel : ViewModel() {
                 is YtDlpVideoResult.Success -> {
                     _state.update { s ->
                         s.copy(
-                            videos = s.videos + videoInfoResult.video,
+                            videos = s.videos + videoInfoResult.video.toVideo(),
                         )
                     }
                 }
@@ -60,7 +60,7 @@ class DownloaderViewModel : ViewModel() {
                 is YtDlpVideoResult.AgeRestricted -> {
                     _state.update { s ->
                         s.copy(
-                            videos = s.videos + videoInfoResult.video
+                            videos = s.videos + videoInfoResult.video.toVideo(),
                         )
                     }
                 }

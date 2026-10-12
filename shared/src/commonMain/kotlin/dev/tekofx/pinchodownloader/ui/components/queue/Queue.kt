@@ -16,9 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.tekofx.pinchodownloader.entities.ButtonVariant
 import dev.tekofx.pinchodownloader.entities.Video
+import dev.tekofx.pinchodownloader.entities.VideoFormat
 import dev.tekofx.pinchodownloader.ui.components.input.TextIconButton
 import dev.tekofx.pinchodownloader.ui.components.video.VideosList
-import dev.tekofx.pinchodownloader.ytdlp.YtDlpFormat
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -32,7 +32,7 @@ fun Queue(
     onClearAll: () -> Unit,
     onClearCompleted: () -> Unit,
     onDeleteVideo: (String) -> Unit,
-    onFormatSelection: (id: String, format: YtDlpFormat?) -> Unit,
+    onFormatSelection: (id: String, format: VideoFormat?) -> Unit,
 ) {
 
 

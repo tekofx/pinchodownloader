@@ -1,6 +1,6 @@
 package dev.tekofx.pinchodownloader.ytdlp
 
-import dev.tekofx.pinchodownloader.entities.Video
+import dev.tekofx.pinchodownloader.entities.VideoFormat
 import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
 import dev.tekofx.pinchodownloader.log.LogStatus
 import dev.tekofx.pinchodownloader.log.LogStore
@@ -10,20 +10,16 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.*
 
-actual suspend fun downloadYtDlp(url: String, format: YtDlpFormat?, onProgress: (Double) -> Unit) {
+actual suspend fun downloadYtDlp(url: String, format: VideoFormat?, onProgress: (Double) -> Unit) {
     withContext(Dispatchers.IO) {
 
-        LogStore.debug("YtDlpRepository.downloadYtDLP", format?.formatNote ?: "null")
-// 1. Construimos la lista de comandos dinámicamente
         val ytDlpCommand = buildList {
             add("yt-dlp")
 
             add("-f")
             if (format == null) {
-                // 💡 Si el formato es null, descarga la mejor combinación de Video + Audio disponible
                 add("bestvideo+bestaudio/best")
             } else {
-                // 💡 Si el formato existe, baja el seleccionado y aseguras audio añadiendo "+bestaudio/best"
                 add("${format.formatId}+bestaudio/best")
             }
 
@@ -40,7 +36,7 @@ actual suspend fun downloadYtDlp(url: String, format: YtDlpFormat?, onProgress: 
             add("--remote-components")
             add("ejs:github")
 
-            add(url) // Agregamos la URL al final
+            add(url)
         }
 
         val proc = ProcessBuilder(
@@ -90,7 +86,7 @@ actual suspend fun fetchVideo(url: String): YtDlpVideoResult {
 
             }
             val ytDlpVideo = parseYtDlpVideo(json)
-            YtDlpVideoResult.Success(ytDlpVideo.toVideo())
+            YtDlpVideoResult.Success(ytDlpVideo)
         } catch (e: JsonDecodingException) {
             LogStore.error("getVideoInfo", e.toString())
             YtDlpVideoResult.Error(e.message ?: "Unknown error")
@@ -134,14 +130,14 @@ fun parseOembed(jsonString: String): YtVideoOembed {
     return jsonConfig.decodeFromString<YtVideoOembed>(jsonString)
 }
 
-actual suspend fun fetchOembed(url: String): Video {
+actual suspend fun fetchOembed(url: String): YtDlpVideo {
     val videoId = extractVideoId(url)
     return withContext(Dispatchers.IO) {
         val url = "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=$videoId&format=json"
         val json = java.net.URL(url).readText()
         val ytVideoOembed = parseOembed(json)
 
-        return@withContext ytVideoOembed.toVideo(id = videoId, url = url)
+        return@withContext ytVideoOembed.toYtDlpVideo(id = videoId, url = url)
 
 
     }

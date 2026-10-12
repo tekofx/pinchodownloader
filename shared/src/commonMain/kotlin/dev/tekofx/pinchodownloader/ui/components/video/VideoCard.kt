@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.tekofx.pinchodownloader.entities.TaskStatus
 import dev.tekofx.pinchodownloader.entities.Video
-import dev.tekofx.pinchodownloader.ytdlp.YtDlpFormat
+import dev.tekofx.pinchodownloader.entities.VideoFormat
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -31,7 +31,7 @@ fun VideoCard(
     video: Video,
     modifier: Modifier,
     onDelete: () -> Unit,
-    onFormatSelection: (YtDlpFormat?) -> Unit,
+    onFormatSelection: (VideoFormat?) -> Unit,
 ) {
 
     val animatedProgress by animateFloatAsState(
@@ -68,7 +68,7 @@ fun VideoCard(
                     Text("Age Restricted")
                 } else {
                     FormatComboBox(
-                        formats = video.ytDlpFormats,
+                        formats = video.formats,
                         selectedFormat = video.selectedFormat,
                         onFormatSelected = onFormatSelection
                     )
@@ -135,18 +135,16 @@ fun VideoCard(
 @Composable
 fun FormatComboBox(
     modifier: Modifier = Modifier,
-    formats: List<YtDlpFormat>,
-    selectedFormat: YtDlpFormat?, // 💡 Recibe el formato actual directamente del objeto 'Video'
-    onFormatSelected: (YtDlpFormat?) -> Unit // Callback para notificar cambios al ViewModel
+    formats: List<VideoFormat>,
+    selectedFormat: VideoFormat?,
+    onFormatSelected: (VideoFormat?) -> Unit
 ) {
-    // Solo manejamos de forma interna si el menú está desplegado o no
     var expanded by remember { mutableStateOf(false) }
 
-    // Función auxiliar para formatear de forma amigable el texto en pantalla
-    val labelText = { format: YtDlpFormat? ->
+    val labelText = { format: VideoFormat? ->
         when {
             format == null -> "No formats available"
-            !format.formatNote.isNullOrBlank() -> format.formatNote
+            format.name.isNotBlank() -> format.name
             else -> "Format ID: ${format.formatId}"
         }
     }
@@ -157,7 +155,6 @@ fun FormatComboBox(
         modifier = modifier
     ) {
         OutlinedTextField(
-            // 💡 El valor mostrado depende directamente de la propiedad del estado global
             value = labelText(selectedFormat),
             onValueChange = {},
             readOnly = true,
