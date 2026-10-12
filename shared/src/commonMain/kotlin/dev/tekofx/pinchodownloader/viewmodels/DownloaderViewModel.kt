@@ -77,6 +77,12 @@ class DownloaderViewModel : ViewModel() {
         val tempPlaylist = _state.value.tempPlaylist ?: return
 
         viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    loading = true,
+                    loaderMessage = "Loading playlist videos"
+                )
+            }
             tempPlaylist.videos.forEachIndexed { index, minimalVideoInfo ->
                 addSingleVideoToQueue(minimalVideoInfo.url)
                 _state.update {
