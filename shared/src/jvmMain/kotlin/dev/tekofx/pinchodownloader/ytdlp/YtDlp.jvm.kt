@@ -40,7 +40,7 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
 }
 
 
-actual suspend fun getVideoInfo(url: String): VideoInfoResult {
+actual suspend fun getVideoInfo(url: String): YtDlpVideoInfoResult {
     return withContext(Dispatchers.IO) {
 
         try {
@@ -55,11 +55,11 @@ actual suspend fun getVideoInfo(url: String): VideoInfoResult {
                 if (stderr.contains("Sign in to confirm your age")) {
                     val minimalVideoInfo = getOEmbed(url)
                     if (minimalVideoInfo != null) {
-                        return@withContext VideoInfoResult.AgeRestricted(minimalVideoInfo)
+                        return@withContext YtDlpVideoInfoResult.AgeRestricted(minimalVideoInfo)
                     }
 
                 }
-                return@withContext VideoInfoResult.Error("yt-dlp failed: ${stderr.take(200)}")
+                return@withContext YtDlpVideoInfoResult.Error("yt-dlp failed: ${stderr.take(200)}")
 
             }
 
@@ -67,32 +67,32 @@ actual suspend fun getVideoInfo(url: String): VideoInfoResult {
 
             LogStore.debug("Parse", videoInfo.toString())
 
-            VideoInfoResult.Success(videoInfo)
+            YtDlpVideoInfoResult.Success(videoInfo)
         } catch (e: Exception) {
             LogStore.error("getVideoInfo", e.message.toString())
-            VideoInfoResult.Error(e.message ?: "Unknown error")
+            YtDlpVideoInfoResult.Error(e.message ?: "Unknown error")
         }
 
     }
 }
 
-fun parseVideoInfo(jsonString: String): VideoInfo {
+fun parseVideoInfo(jsonString: String): YtDlpVideo {
     val jsonConfig = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
     }
 
-    return jsonConfig.decodeFromString<VideoInfo>(jsonString)
+    return jsonConfig.decodeFromString<YtDlpVideo>(jsonString)
 }
 
-actual suspend fun getOEmbed(url: String): MinimalVideoInfo? {
+actual suspend fun getOEmbed(url: String): YtDlpPlaylistVideo? {
     val videoId = extractVideoId(url)
     return withContext(Dispatchers.IO) {
         val url = "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=$videoId&format=json"
         val json = java.net.URL(url).readText()
         val obj = Json.parseToJsonElement(json) as? JsonObject ?: return@withContext null
 
-        MinimalVideoInfo(
+        YtDlpPlaylistVideo(
             title = obj.getString("title") ?: "",
             thumbnail = obj.getString("thumbnail_url") ?: "",
             url = "https://www.youtube.com/watch?v=$videoId",
@@ -101,7 +101,7 @@ actual suspend fun getOEmbed(url: String): MinimalVideoInfo? {
 }
 
 
-actual suspend fun getPlaylistInfo(url: String): PlaylistInfoResult {
+actual suspend fun getPlaylistInfo(url: String): YtDlpPlaylistResult {
     return withContext(Dispatchers.IO) {
 
         val process = ProcessBuilder("yt-dlp", "--flat-playlist", "-J", url)
@@ -114,28 +114,28 @@ actual suspend fun getPlaylistInfo(url: String): PlaylistInfoResult {
         val entries = root["entries"]?.jsonArray
 
 
-        val videos: MutableList<MinimalVideoInfo> = mutableListOf()
+        val videos: MutableList<YtDlpPlaylistVideo> = mutableListOf()
 
         entries?.forEach { entry ->
             val json = entry.jsonObject
             val title = json["title"]?.jsonPrimitive?.content
-                ?: return@withContext PlaylistInfoResult.Error("No title in response")
+                ?: return@withContext YtDlpPlaylistResult.Error("No title in response")
             val videoUrl = json["webpage_url"]?.jsonPrimitive?.content
                 ?: "https://www.youtube.com/watch?v=${json["id"]?.jsonPrimitive?.content}"
             val thumbnail = getThumbnail(json) ?: ""
-            videos.addLast(MinimalVideoInfo(title, videoUrl, thumbnail))
+            videos.addLast(YtDlpPlaylistVideo(title, videoUrl, thumbnail))
         }
 
-        return@withContext PlaylistInfoResult.Success(PlaylistInfo(url, videos))
+        return@withContext YtDlpPlaylistResult.Success(YtDlpPlaylist(url, videos))
 
     }
 }
 
 
-private fun getAllFormats(jsonString: String): List<Format> {
+private fun getAllFormats(jsonString: String): List<YtDlpFormat> {
     val jsonConfig = Json { ignoreUnknownKeys = true } // Ignora los campos que no mapeamos
-    val format = jsonConfig.decodeFromString<List<Format>>(jsonString)
-    return format
+    val ytDlpFormat = jsonConfig.decodeFromString<List<YtDlpFormat>>(jsonString)
+    return ytDlpFormat
 }
 
 private fun JsonObject.getString(key: String): String? =

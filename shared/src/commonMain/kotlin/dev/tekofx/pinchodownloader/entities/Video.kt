@@ -5,7 +5,7 @@ data class Video(
     val title: String,
     val thumbnail: String,
     val url: String,
-    val formats: List<Format>,
+    val ytDlpFormats: List<YtDlpFormat>,
 
 
     var status: TaskStatus = TaskStatus.PENDING,

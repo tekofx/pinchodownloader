@@ -71,7 +71,7 @@ fun VideoCard(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Icon(imageVector = Icons.Default.VideoSettings, contentDescription = null)
-                        video.formats[0].formatNote?.let { Text(text = it) }
+                        video.ytDlpFormats[0].formatNote?.let { Text(text = it) }
                     }
                 }
             }

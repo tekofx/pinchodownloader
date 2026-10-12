@@ -51,8 +51,8 @@ class DownloaderViewModel : ViewModel() {
             _snackbar.value = "Video already in queue"
         } else {
             when (val videoInfoResult = getVideoInfo(url)) {
-                is VideoInfoResult.Success -> {
-                    val videoInfo = videoInfoResult.videoInfo
+                is YtDlpVideoInfoResult.Success -> {
+                    val videoInfo = videoInfoResult.ytDlpVideo
                     _state.update { s ->
                         s.copy(
                             videos = s.videos + Video(
@@ -60,15 +60,15 @@ class DownloaderViewModel : ViewModel() {
                                 title = videoInfo.title,
                                 thumbnail = videoInfo.thumbnail,
                                 url = url,
-                                formats = videoInfo.formats
+                                ytDlpFormats = videoInfo.ytDlpFormats
                             )
                         )
                     }
                 }
 
 
-                is VideoInfoResult.AgeRestricted -> {
-                    val minimalVideoInfo = videoInfoResult.minimalVideoInfo
+                is YtDlpVideoInfoResult.AgeRestricted -> {
+                    val minimalVideoInfo = videoInfoResult.ytDlpPlaylistVideo
                     _state.update { s ->
                         s.copy(
                             videos = s.videos + Video(
@@ -76,14 +76,14 @@ class DownloaderViewModel : ViewModel() {
                                 title = minimalVideoInfo.title,
                                 thumbnail = minimalVideoInfo.thumbnail,
                                 url = state.value.url,
-                                formats = listOf(Format(formatId = "-1", formatNote = "Age Restricted")),
+                                ytDlpFormats = listOf(YtDlpFormat(formatId = "-1", formatNote = "Age Restricted")),
                                 status = TaskStatus.ERROR
                             )
                         )
                     }
                 }
 
-                is VideoInfoResult.Error -> {
+                is YtDlpVideoInfoResult.Error -> {
                     LogStore.error("addSingleVideoToQueue", videoInfoResult.toString())
                     val test = getOEmbed(url)
                     LogStore.error("addSingleVideoToQueue", test.toString())
@@ -99,10 +99,10 @@ class DownloaderViewModel : ViewModel() {
     private suspend fun addPlaylistToQueue(url: String) {
 
         when (val playlistInfoResult = getPlaylistInfo(url)) {
-            is PlaylistInfoResult.Success -> {
+            is YtDlpPlaylistResult.Success -> {
                 _state.update { it.copy(loading = true, loaderMessage = "Adding playlist videos") }
 
-                val minimalVideoInfoList = playlistInfoResult.playlistInfo
+                val minimalVideoInfoList = playlistInfoResult.ytDlpPlaylist
 
                 minimalVideoInfoList.videos.forEachIndexed { index, minimalVideoInfo ->
                     addSingleVideoToQueue(minimalVideoInfo.url)
@@ -115,7 +115,7 @@ class DownloaderViewModel : ViewModel() {
                 }
             }
 
-            is PlaylistInfoResult.Error -> {
+            is YtDlpPlaylistResult.Error -> {
                 LogStore.error("addPlaylistToQueue", playlistInfoResult.toString())
                 _state.update { it.copy(status = playlistInfoResult.message) }
             }
