@@ -23,6 +23,10 @@ actual suspend fun downloadYtDlp(url: String, format: VideoFormat?, onProgress: 
                 add("${format.formatId}+bestaudio/best")
             }
 
+            // Pack as mp4
+            add("--remux-video")
+            add("mp4")
+
             add("-o")
             add("${getDownloadsDir()}/%(title)s.%(ext)s")
 
