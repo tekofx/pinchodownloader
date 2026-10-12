@@ -52,6 +52,11 @@ fun YtDlpVideo.toVideo(): Video {
         .sortedByDescending { it.preference }
         .map { it.url }
 
+
+    if (this.ytDlpFormats.isEmpty()) {
+
+    }
+
     return Video(
         id = id,
         url = url,
@@ -59,7 +64,8 @@ fun YtDlpVideo.toVideo(): Video {
         thumbnails = orderedThumbnailUrls,
         formats = uniqueFormatsPerResolution.toFormatList(),
         selectedFormat = defaultFormat?.toFormat(),
-        status = TaskStatus.PENDING,
+        // If formats is empty, means is Age restricted video
+        status = if (this.ytDlpFormats.isEmpty()) TaskStatus.AGE_RESTRICTED else TaskStatus.PENDING,
         progress = 0f,
     )
 }
