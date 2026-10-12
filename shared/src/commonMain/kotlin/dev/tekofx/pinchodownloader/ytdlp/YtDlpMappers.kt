@@ -53,10 +53,6 @@ fun YtDlpVideo.toVideo(): Video {
         .map { it.url }
 
 
-    if (this.ytDlpFormats.isEmpty()) {
-
-    }
-
     return Video(
         id = id,
         url = url,

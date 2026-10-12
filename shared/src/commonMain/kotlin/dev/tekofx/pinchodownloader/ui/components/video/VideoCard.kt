@@ -45,13 +45,6 @@ fun VideoCard(
         label = "progress"
     )
 
-    val platformContext = LocalPlatformContext.current
-
-    // Make coil try to fetch thumbnails until it gets one
-    val imageRequest = ImageRequest.Builder(platformContext)
-        .data(video.thumbnails)
-        .crossfade(true)
-        .build()
 
     Card(modifier = modifier.fillMaxWidth()) {
         Row(
