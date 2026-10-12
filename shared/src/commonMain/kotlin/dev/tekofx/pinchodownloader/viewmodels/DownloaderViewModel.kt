@@ -29,10 +29,10 @@ class DownloaderViewModel : ViewModel() {
 
 
         viewModelScope.launch {
-            _state.update { it.copy(loading = true) }
             if (_state.value.url.contains("&list=")) {
                 addPlaylistToQueue(_state.value.url)
             } else {
+                _state.update { it.copy(loading = true, loaderMessage = "Getting video") }
                 addSingleVideoToQueue(_state.value.url)
             }
             _state.update { it.copy(loading = false) }
@@ -101,6 +101,8 @@ class DownloaderViewModel : ViewModel() {
     }
 
     private suspend fun addPlaylistToQueue(url: String) {
+        _state.update { it.copy(loading = true, loaderMessage = "Getting playlist") }
+
 
         when (val playlistInfoResult = fetchPlaylist(url)) {
             is YtDlpPlaylistResult.Success -> {
