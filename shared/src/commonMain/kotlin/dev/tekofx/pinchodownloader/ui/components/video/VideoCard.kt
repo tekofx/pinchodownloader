@@ -29,6 +29,7 @@ import dev.tekofx.pinchodownloader.entities.VideoFormat
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VideoCard(
+    index: Int,
     video: Video,
     modifier: Modifier,
     onDelete: () -> Unit,
@@ -49,7 +50,7 @@ fun VideoCard(
         ) {
 
             Text(
-                text = video.id.toString(), modifier = Modifier.weight(layout.id)
+                text = "#${index}", modifier = Modifier.weight(layout.id)
             )
             AsyncImage(
                 model = video.thumbnail,
