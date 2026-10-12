@@ -1,6 +1,5 @@
 package dev.tekofx.pinchodownloader.ytdlp
 
-import dev.tekofx.pinchodownloader.entities.*
 import dev.tekofx.pinchodownloader.log.LogStatus
 import dev.tekofx.pinchodownloader.log.LogStore
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +42,7 @@ actual suspend fun downloadYtDlp(url: String, outDir: String, onProgress: (Doubl
 
 
 @OptIn(ExperimentalSerializationApi::class)
-actual suspend fun getVideoInfo(url: String): YtDlpVideoInfoResult {
+actual suspend fun fetchVideo(url: String): YtDlpVideoResult {
     return withContext(Dispatchers.IO) {
 
         try {
@@ -58,26 +57,26 @@ actual suspend fun getVideoInfo(url: String): YtDlpVideoInfoResult {
                 if (stderr.contains("Sign in to confirm your age")) {
                     val minimalVideoInfo = getOEmbed(url)
                     if (minimalVideoInfo != null) {
-                        return@withContext YtDlpVideoInfoResult.AgeRestricted(minimalVideoInfo)
+                        return@withContext YtDlpVideoResult.AgeRestricted(minimalVideoInfo)
                     }
 
                 }
-                return@withContext YtDlpVideoInfoResult.Error("yt-dlp failed: ${stderr.take(200)}")
+                return@withContext YtDlpVideoResult.Error("yt-dlp failed: ${stderr.take(200)}")
 
             }
             val videoInfo = parseVideoInfo(json)
-            YtDlpVideoInfoResult.Success(videoInfo)
+            YtDlpVideoResult.Success(videoInfo)
         } catch (e: JsonDecodingException) {
             LogStore.error("getVideoInfo", e.toString())
-            YtDlpVideoInfoResult.Error(e.message ?: "Unknown error")
+            YtDlpVideoResult.Error(e.message ?: "Unknown error")
 
         } catch (e: SerializationException) {
             // Captura cualquier otro error general de la librería de serialización
             LogStore.error("Serialization Error", "No se pudo mapear el JSON a las entidades: ${e.message}")
-            YtDlpVideoInfoResult.Error(e.message ?: "Unknown error")
+            YtDlpVideoResult.Error(e.message ?: "Unknown error")
         } catch (e: Exception) {
             LogStore.error("getVideoInfo", e.toString())
-            YtDlpVideoInfoResult.Error(e.message ?: "Unknown error")
+            YtDlpVideoResult.Error(e.message ?: "Unknown error")
         }
     }
 
@@ -118,7 +117,7 @@ actual suspend fun getOEmbed(url: String): YtDlpPlaylistVideo? {
 }
 
 
-actual suspend fun getPlaylistInfo(url: String): YtDlpPlaylistResult {
+actual suspend fun fetchPlaylist(url: String): YtDlpPlaylistResult {
     return withContext(Dispatchers.IO) {
 
         val process = ProcessBuilder("yt-dlp", "--flat-playlist", "-J", url)

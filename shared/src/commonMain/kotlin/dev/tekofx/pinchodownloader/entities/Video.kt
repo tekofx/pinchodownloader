@@ -1,5 +1,7 @@
 package dev.tekofx.pinchodownloader.entities
 
+import dev.tekofx.pinchodownloader.ytdlp.YtDlpFormat
+
 data class Video(
     val id: Int,
     val title: String,

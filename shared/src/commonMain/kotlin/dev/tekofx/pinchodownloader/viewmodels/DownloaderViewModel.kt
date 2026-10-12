@@ -2,14 +2,12 @@ package dev.tekofx.pinchodownloader.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.tekofx.pinchodownloader.entities.*
+import dev.tekofx.pinchodownloader.entities.TaskStatus
+import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.states.DownloaderState
 import dev.tekofx.pinchodownloader.filesystem.getDownloadsDir
 import dev.tekofx.pinchodownloader.log.LogStore
-import dev.tekofx.pinchodownloader.ytdlp.downloadYtDlp
-import dev.tekofx.pinchodownloader.ytdlp.getOEmbed
-import dev.tekofx.pinchodownloader.ytdlp.getPlaylistInfo
-import dev.tekofx.pinchodownloader.ytdlp.getVideoInfo
+import dev.tekofx.pinchodownloader.ytdlp.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -50,8 +48,8 @@ class DownloaderViewModel : ViewModel() {
             LogStore.debug("addToQueue", "Video already in queue")
             _snackbar.value = "Video already in queue"
         } else {
-            when (val videoInfoResult = getVideoInfo(url)) {
-                is YtDlpVideoInfoResult.Success -> {
+            when (val videoInfoResult = fetchVideo(url)) {
+                is YtDlpVideoResult.Success -> {
                     val videoInfo = videoInfoResult.ytDlpVideo
                     _state.update { s ->
                         s.copy(
@@ -67,7 +65,7 @@ class DownloaderViewModel : ViewModel() {
                 }
 
 
-                is YtDlpVideoInfoResult.AgeRestricted -> {
+                is YtDlpVideoResult.AgeRestricted -> {
                     val minimalVideoInfo = videoInfoResult.ytDlpPlaylistVideo
                     _state.update { s ->
                         s.copy(
@@ -83,7 +81,7 @@ class DownloaderViewModel : ViewModel() {
                     }
                 }
 
-                is YtDlpVideoInfoResult.Error -> {
+                is YtDlpVideoResult.Error -> {
                     LogStore.error("addSingleVideoToQueue", videoInfoResult.toString())
                     val test = getOEmbed(url)
                     LogStore.error("addSingleVideoToQueue", test.toString())
@@ -98,7 +96,7 @@ class DownloaderViewModel : ViewModel() {
 
     private suspend fun addPlaylistToQueue(url: String) {
 
-        when (val playlistInfoResult = getPlaylistInfo(url)) {
+        when (val playlistInfoResult = fetchPlaylist(url)) {
             is YtDlpPlaylistResult.Success -> {
                 _state.update { it.copy(loading = true, loaderMessage = "Adding playlist videos") }
 

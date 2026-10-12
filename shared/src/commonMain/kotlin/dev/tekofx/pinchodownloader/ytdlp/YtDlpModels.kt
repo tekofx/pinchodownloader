@@ -1,4 +1,4 @@
-package dev.tekofx.pinchodownloader.entities
+package dev.tekofx.pinchodownloader.ytdlp
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -47,15 +47,3 @@ data class YtDlpPlaylist(
     val videos: List<YtDlpPlaylistVideo>
 )
 
-sealed class YtDlpVideoInfoResult {
-    data class Error(val message: String) : YtDlpVideoInfoResult()
-    data class Success(val ytDlpVideo: YtDlpVideo) : YtDlpVideoInfoResult()
-
-    data class AgeRestricted(val ytDlpPlaylistVideo: YtDlpPlaylistVideo) : YtDlpVideoInfoResult()
-}
-
-
-sealed class YtDlpPlaylistResult {
-    data class Error(val message: String) : YtDlpPlaylistResult()
-    data class Success(val ytDlpPlaylist: YtDlpPlaylist) : YtDlpPlaylistResult()
-}
