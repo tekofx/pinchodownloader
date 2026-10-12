@@ -68,11 +68,7 @@ class DownloaderViewModel : ViewModel() {
 
                 is YtDlpVideoResult.Error -> {
                     LogStore.error("addSingleVideoToQueue", videoInfoResult.toString())
-                    val test = fetchOembed(url)
-                    LogStore.error("addSingleVideoToQueue", test.toString())
-
                     _state.update { it.copy(status = videoInfoResult.message) }
-
                 }
             }
 

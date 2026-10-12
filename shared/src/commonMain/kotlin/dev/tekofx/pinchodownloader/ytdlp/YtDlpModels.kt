@@ -21,6 +21,7 @@ data class YtDlpFormat(
     val formatId: String,
     @SerialName("format_note")
     val formatNote: String? = null,
+    val height: Int? = null
 )
 
 

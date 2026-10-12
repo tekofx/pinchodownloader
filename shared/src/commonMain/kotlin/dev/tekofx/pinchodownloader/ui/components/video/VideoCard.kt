@@ -65,10 +65,12 @@ fun VideoCard(
             Row(modifier = Modifier.weight(layout.format)) {
                 if (video.status == TaskStatus.AGE_RESTRICTED) {
                     Text("Age Restricted")
-
                 } else {
-
-                    FormatComboBox(formats = video.ytDlpFormats, onFormatSelected = {})
+                    FormatComboBox(
+                        formats = video.ytDlpFormats,
+                        selectedFormat = video.selectedFormat,
+                        onFormatSelected = {}
+                    )
                 }
             }
 
@@ -132,19 +134,20 @@ fun VideoCard(
 @Composable
 fun FormatComboBox(
     modifier: Modifier = Modifier,
-    formats: List<YtDlpFormat>, // 💡 Aceptamos tu lista de objetos reales
-    onFormatSelected: (YtDlpFormat) -> Unit // 💡 Devolvemos el objeto completo seleccionado
+    formats: List<YtDlpFormat>,
+    selectedFormat: YtDlpFormat?, // 💡 Recibe el formato actual directamente del objeto 'Video'
+    onFormatSelected: (YtDlpFormat) -> Unit // Callback para notificar cambios al ViewModel
 ) {
+    // Solo manejamos de forma interna si el menú está desplegado o no
     var expanded by remember { mutableStateOf(false) }
 
-    // Controlamos el formato seleccionado actual (por defecto el primero)
-    var selectedFormat by remember { mutableStateOf(formats.firstOrNull()) }
-
-    // Función auxiliar para mostrar un texto limpio en la interfaz
-    // Si formatNote es null o vacío, muestra el formatId (ej: "137" o "22")
+    // Función auxiliar para formatear de forma amigable el texto en pantalla
     val labelText = { format: YtDlpFormat? ->
-        if (format == null) "No formats available"
-        else format.formatNote?.ifBlank { null } ?: "Format ID: ${format.formatId}"
+        when {
+            format == null -> "No formats available"
+            !format.formatNote.isNullOrBlank() -> format.formatNote
+            else -> "Format ID: ${format.formatId}"
+        }
     }
 
     ExposedDropdownMenuBox(
@@ -153,7 +156,8 @@ fun FormatComboBox(
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = labelText(selectedFormat), // Mostramos el texto amigable
+            // 💡 El valor mostrado depende directamente de la propiedad del estado global
+            value = labelText(selectedFormat),
             onValueChange = {},
             readOnly = true,
             label = { Text("Quality / Format") },
@@ -170,14 +174,10 @@ fun FormatComboBox(
         ) {
             formats.forEach { ytDlpFormat ->
                 DropdownMenuItem(
-                    text = {
-                        // Mostramos el texto amigable en la lista desplegable
-                        Text(text = labelText(ytDlpFormat))
-                    },
+                    text = { Text(text = labelText(ytDlpFormat)) },
                     onClick = {
-                        selectedFormat = ytDlpFormat
-                        expanded = false
-                        onFormatSelected(ytDlpFormat) // Notificamos el objeto completo al exterior
+                        expanded = false // Cerramos el menú flotante
+                        onFormatSelected(ytDlpFormat) // Notificamos al ViewModel el nuevo formato elegido
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                 )

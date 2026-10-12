@@ -8,6 +8,7 @@ data class Video(
     val thumbnail: String,
     val url: String,
     val ytDlpFormats: List<YtDlpFormat>,
+    val selectedFormat: YtDlpFormat?,
 
     var status: TaskStatus = TaskStatus.PENDING,
     var progress: Float = 0f
