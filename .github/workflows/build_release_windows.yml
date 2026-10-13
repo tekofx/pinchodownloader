@@ -1,0 +1,71 @@
+name: Build and Release Windows App
+
+on:
+  release:
+    types: [published] # Se ejecuta automáticamente cuando creas y publicas una Release
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    permissions:
+      contents: write # Permiso crucial para poder subir el archivo a la Release
+
+    steps:
+      # 1. Descargar el código fuente del repositorio
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # 2. Configurar el entorno de Java (Requerido por Gradle y Compose Desktop)
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu' # Puedes usar 'temurin' o 'zulu'
+          java-version: '17'   # Asegúrate de usar la versión compatible con tu proyecto
+
+      # 3. Configurar la caché de Gradle para acelerar futuras compilaciones
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # 4. Compilar la aplicación y generar el empaquetado nativo (.exe)
+      # Nota: Ajusta ':composeApp' si el módulo de tu aplicación de escritorio tiene otro nombre (ej. ':desktopApp')
+      - name: Build Windows EXE
+        run: ./gradlew :composeApp:packageExe
+
+      # 5. Localizar el archivo .exe generado y subirlo a la Release publicada
+      - name: Upload EXE to GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Ruta estándar donde Gradle genera el ejecutable (.exe)
+            // Cambia 'composeApp' si tu módulo se llama diferente
+            const searchDir = path.join(process.env.GITHUB_WORKSPACE, 'composeApp', 'build', 'compose', 'binaries', 'main', 'exe');
+            
+            if (!fs.existsSync(searchDir)) {
+              core.setFailed(`No se encontró el directorio de ejecutables en: ${searchDir}`);
+              return;
+            }
+            
+            // Buscar cualquier archivo con extensión .exe en el directorio
+            const files = fs.readdirSync(searchDir);
+            const exeFile = files.find(file => file.endsWith('.exe'));
+            
+            if (!exeFile) {
+              core.setFailed('No se encontró ningún archivo .exe en el directorio de salida.');
+              return;
+            }
+            
+            const filePath = path.join(searchDir, exeFile);
+            console.log(`Subiendo archivo: ${filePath}`);
+            
+            // Subir el archivo directamente a la release actual que disparó el evento
+            await github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id,
+              name: exeFile,
+              data: fs.readFileSync(filePath)
+            });
