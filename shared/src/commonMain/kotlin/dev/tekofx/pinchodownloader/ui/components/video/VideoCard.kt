@@ -6,16 +6,15 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.HourglassBottom
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -58,26 +57,36 @@ fun VideoCard(
             )
             VideoThumbnail(
                 video = video,
-                modifier = Modifier.weight(layout.thumbnail).height(54.dp)
+                modifier = Modifier.weight(layout.thumbnail).border(1.dp, Color.Red)
             )
             Text(
                 text = video.title,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(layout.title)
+                modifier = Modifier.weight(layout.title).border(1.dp, Color.Red)
             )
 
             Row(modifier = Modifier.weight(layout.format)) {
-                if (video.status == TaskStatus.AGE_RESTRICTED) {
-                    Text("Age Restricted")
-                } else {
-                    Text("Default")
-                    /*FormatComboBox(
-                        formats = video.formats,
-                        selectedFormat = video.selectedFormat,
-                        onFormatSelected = onFormatSelection
-                    )*/
+                Card(
+                    colors = CardDefaults.cardColors().copy(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        if (video.status == TaskStatus.AGE_RESTRICTED) {
+                            Icon(imageVector = Icons.Default.Block, contentDescription = null)
+                            Text("Age Restricted")
+                        } else {
+                            Icon(imageVector = Icons.Default.VideoSettings, contentDescription = null)
+                            Text(video.formats.first().name)
+                        }
+                    }
                 }
+
             }
 
             Row(
@@ -119,7 +128,7 @@ fun VideoCard(
 
             }
             Row(
-                modifier = Modifier.weight(layout.status),
+                modifier = Modifier.weight(layout.action),
             ) {
                 IconButton(
                     onClick = onDelete
@@ -156,7 +165,7 @@ fun VideoThumbnail(
             model = imageRequest,
             contentDescription = "Video Thumbnail",
             contentScale = ContentScale.Crop,
-            modifier = modifier.size(width = 120.dp, height = 90.dp),
+            modifier = modifier,
             onError = { errorState ->
                 LogStore.warn(
                     "VideoThumbnail",
