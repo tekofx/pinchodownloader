@@ -2,70 +2,77 @@ name: Build and Release Windows App
 
 on:
   release:
-    types: [published] # Se ejecuta automáticamente cuando creas y publicas una Release
+    types: [published]
 
 jobs:
   build-windows:
     runs-on: windows-latest
     
     permissions:
-      contents: write # Permiso crucial para poder subir el archivo a la Release
+      contents: write
 
     steps:
-      # 1. Descargar el código fuente del repositorio
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      # 2. Configurar el entorno de Java (Requerido por Gradle y Compose Desktop)
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu' # Puedes usar 'temurin' o 'zulu'
-          java-version: '17'   # Asegúrate de usar la versión compatible con tu proyecto
+          distribution: 'zulu'
+          java-version: '17'
 
-      # 3. Configurar la caché de Gradle para acelerar futuras compilaciones
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # 4. Compilar la aplicación y generar el empaquetado nativo (.exe)
-      # Nota: Ajusta ':composeApp' si el módulo de tu aplicación de escritorio tiene otro nombre (ej. ':desktopApp')
+      # CAMBIO AQUÍ: Llamamos a packageExe globalmente. Gradle buscará qué módulo la tiene.
       - name: Build Windows EXE
-        run: ./gradlew :composeApp:packageExe
+        run: ./gradlew packageExe
 
-      # 5. Localizar el archivo .exe generado y subirlo a la Release publicada
+      # Buscador dinámico de archivos: Encuentra el .exe sin importar la carpeta del módulo
       - name: Upload EXE to GitHub Release
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const path = require('path');
-            
-            // Ruta estándar donde Gradle genera el ejecutable (.exe)
-            // Cambia 'composeApp' si tu módulo se llama diferente
-            const searchDir = path.join(process.env.GITHUB_WORKSPACE, 'composeApp', 'build', 'compose', 'binaries', 'main', 'exe');
-            
-            if (!fs.existsSync(searchDir)) {
-              core.setFailed(`No se encontró el directorio de ejecutables en: ${searchDir}`);
+
+            // Función recursiva para buscar archivos .exe dentro de carpetas de build de Gradle
+            function findExeFile(dir) {
+              if (!fs.existsSync(dir)) return null;
+              
+              const files = fs.readdirSync(dir);
+              for (const file of files) {
+                const fullPath = path.join(dir, file);
+                const stat = fs.statSync(fullPath);
+                
+                if (stat.isDirectory()) {
+                  // Evitamos buscar en carpetas irrelevantes para ir más rápido
+                  if (file === 'node_modules' || file === '.git' || file === '.gradle') continue;
+                  const found = findExeFile(fullPath);
+                  if (found) return found;
+                } else if (file.endsWith('.exe') && fullPath.includes('compose' + path.sep + 'binaries')) {
+                  return fullPath;
+                }
+              }
+              return null;
+            }
+
+            const workspace = process.env.GITHUB_WORKSPACE;
+            const exePath = findExeFile(workspace);
+
+            if (!exePath) {
+              core.setFailed('No se pudo localizar el archivo .exe generado en los directorios de compilación.');
               return;
             }
-            
-            // Buscar cualquier archivo con extensión .exe en el directorio
-            const files = fs.readdirSync(searchDir);
-            const exeFile = files.find(file => file.endsWith('.exe'));
-            
-            if (!exeFile) {
-              core.setFailed('No se encontró ningún archivo .exe en el directorio de salida.');
-              return;
-            }
-            
-            const filePath = path.join(searchDir, exeFile);
-            console.log(`Subiendo archivo: ${filePath}`);
-            
-            // Subir el archivo directamente a la release actual que disparó el evento
+
+            const exeFile = path.basename(exePath);
+            console.log(`Archivo encontrado: ${exePath}`);
+            console.log(`Subiendo asset: ${exeFile}`);
+
             await github.rest.repos.uploadReleaseAsset({
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: context.payload.release.id,
               name: exeFile,
-              data: fs.readFileSync(filePath)
+              data: fs.readFileSync(exePath)
             });
