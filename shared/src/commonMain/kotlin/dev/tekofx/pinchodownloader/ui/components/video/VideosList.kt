@@ -1,5 +1,6 @@
 package dev.tekofx.pinchodownloader.ui.components.video
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.tekofx.pinchodownloader.entities.Video
 import dev.tekofx.pinchodownloader.entities.VideoFormat
@@ -46,8 +48,7 @@ fun VideosList(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     contentColor = MaterialTheme.colorScheme.onSurface,
-
-                    ),
+                ),
                 shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 0)),
             ) {
                 Row(
@@ -60,15 +61,15 @@ fun VideosList(
                     )
                     Text(
                         text = "Thumbnail",
-                        modifier = Modifier.weight(layout.thumbnail)
+                        modifier = Modifier.weight(layout.thumbnail).border(1.dp, Color.Red)
                     )
                     Text(
                         text = "Title",
-                        modifier = Modifier.weight(layout.title)
+                        modifier = Modifier.weight(layout.title).border(1.dp, Color.Red)
                     )
                     Text(
                         text = "Format",
-                        modifier = Modifier.weight(layout.format)
+                        modifier = Modifier.weight(layout.format).border(1.dp, Color.Red)
                     )
                     Text(
                         text = "Status",

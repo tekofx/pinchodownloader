@@ -1,3 +1,11 @@
+## 1.3.3 - 2026/10/13
+
+### Fixed
+
+- Recovered format card in video card
+
+## 1.3.1 - 2026/10/13
+
 ## 1.3.2 - 2026/10/13
 
 ### Fixed
