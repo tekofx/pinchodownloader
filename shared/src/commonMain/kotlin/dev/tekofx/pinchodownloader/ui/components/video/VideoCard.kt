@@ -71,11 +71,12 @@ fun VideoCard(
                 if (video.status == TaskStatus.AGE_RESTRICTED) {
                     Text("Age Restricted")
                 } else {
-                    FormatComboBox(
+                    Text("Default")
+                    /*FormatComboBox(
                         formats = video.formats,
                         selectedFormat = video.selectedFormat,
                         onFormatSelected = onFormatSelection
-                    )
+                    )*/
                 }
             }
 

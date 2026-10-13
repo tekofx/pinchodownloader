@@ -16,15 +16,7 @@ actual suspend fun downloadYtDlp(url: String, format: VideoFormat?, onProgress: 
         val ytDlpCommand = buildList {
             add("yt-dlp")
 
-            add("-f")
-            if (format == null) {
-                add("bestvideo+bestaudio/best")
-            } else {
-                add("${format.formatId}+bestaudio/best")
-            }
-
-            // Pack as mp4
-            add("--remux-video")
+            add("-t")
             add("mp4")
 
             add("-o")

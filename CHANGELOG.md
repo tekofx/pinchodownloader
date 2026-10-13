@@ -1,3 +1,9 @@
+## 1.3.2 - 2026/10/13
+
+### Fixed
+
+- Reverted format selection, since its not compatible with some programs
+
 ## 1.3.1 - 2026/10/13
 
 ### Fixed
