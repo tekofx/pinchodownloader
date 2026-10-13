@@ -30,9 +30,9 @@ fun YtDlpVideo.toVideo(): Video {
             formatsInResolution.minByOrNull { format ->
                 val codec = format.vcodec ?: ""
                 val codecScore = when {
-                    codec.contains("vp9", ignoreCase = true) -> 1
-                    codec.contains("av01", ignoreCase = true) -> 2
-                    codec.contains("avc1", ignoreCase = true) -> 3
+                    codec.contains("avc1", ignoreCase = true) -> 1
+                    codec.contains("vp9", ignoreCase = true) -> 2
+                    codec.contains("av01", ignoreCase = true) -> 3
                     else -> 4
                 }
                 val fpsValue = format.fps?.toInt() ?: 0

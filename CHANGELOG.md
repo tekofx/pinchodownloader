@@ -1,3 +1,9 @@
+## 1.3.1 - 2026/10/13
+
+### Fixed
+
+- Issue with download codec
+
 ## 1.3.0 - 2026/10/12
 
 ### Added
