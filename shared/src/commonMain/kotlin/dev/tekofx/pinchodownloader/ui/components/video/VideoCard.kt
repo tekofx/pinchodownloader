@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -57,13 +55,13 @@ fun VideoCard(
             )
             VideoThumbnail(
                 video = video,
-                modifier = Modifier.weight(layout.thumbnail).border(1.dp, Color.Red)
+                modifier = Modifier.weight(layout.thumbnail)
             )
             Text(
                 text = video.title,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(layout.title).border(1.dp, Color.Red)
+                modifier = Modifier.weight(layout.title)
             )
 
             Row(modifier = Modifier.weight(layout.format)) {

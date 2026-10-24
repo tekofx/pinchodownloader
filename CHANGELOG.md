@@ -1,3 +1,9 @@
+## 1.3.4 - 2026/10/24
+
+### Fixed
+
+- Removed borders from elements in queue
+
 ## 1.3.3 - 2026/10/13
 
 ### Fixed
